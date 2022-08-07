@@ -49,6 +49,7 @@
             float _invertSmooth;
             sampler2D _SmoothnessMaskMap;
             sampler2D _MetalMaskMap;
+            float3 _fallbackColor;
             
             float4 _SpeccColor;
             float _SpecSmoothness;
@@ -88,7 +89,6 @@
                 return o;
             }
 
-            
             fixed4 frag (v2f i) : SV_Target
             {
                 float avgDirIntensity = (_LightColor0.r + _LightColor0.g + _LightColor0.b)/3.0;
@@ -149,7 +149,7 @@
                     if (_customcubemap == 1){skyData = texCUBElod(_CustomReflection, float4(VRef,_RefSmoothness * UNITY_SPECCUBE_LOD_STEPS * 2));}
                     else {skyData = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, VRef, _RefSmoothness * UNITY_SPECCUBE_LOD_STEPS);}
         
-                    half3 skyColor = saturate(DecodeHDR(skyData, unity_SpecCube0_HDR));
+                    half3 skyColor = saturate(DecodeHDR(skyData, unity_SpecCube0_HDR)) * _fallbackColor;
                     mainOut = lerp(mainOut, mainOut * skyColor, _Metallic * tex2D(_MetalMaskMap, i.uv).xyz);
                 } 
         
@@ -172,6 +172,5 @@
                     finalOut = lerp(finalOut, mainOut * _EmisColor * _EmisPower, tex2D(_EmisTex, i.uv).xyz);
                 }
                 
-                //ShadeSH9(float4(worldNormal,1))
                 return float4(finalOut,1); 
             }

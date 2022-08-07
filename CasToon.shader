@@ -30,6 +30,7 @@
         _MetalMaskMap("Metal Mask", 2D) = "white" {}
         _customcubemap("Use Custom Cubemap", Float) = 0
         _CustomReflection("Custom Cubemap", CUBE) = "white" {}
+        _fallbackColor("Fallback Color", Color) = (1,1,1)
 
         _SpeccColor("Specular Color", Color) = (1,1,1,1)
         _SpecSmoothness("Smoothness", Range(0,2)) = 0.5

@@ -208,7 +208,10 @@ public class CasToonGUI : ShaderGUI
         bool cubetogg = Convert.ToBoolean(cubetog.floatValue);
         cubetogg = GUILayout.Toggle(cubetogg, GUIContent.none);
         if (cubetogg == true) { cubetog.floatValue = 1f; } else { cubetog.floatValue = 0f; }
-
+        
+        MaterialProperty fallbackColor = FindProperty("_fallbackColor", properties);
+        editor.ColorProperty(fallbackColor, "Fallback Color");
+            
         MaterialProperty customcubeTex = FindProperty("_CustomReflection", properties);
         GUIContent customcubeLabel = new GUIContent(customcubeTex.displayName, "Custom Reflection");
         editor.TexturePropertySingleLine(customcubeLabel, customcubeTex);
