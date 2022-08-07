@@ -122,12 +122,16 @@ public class CasToonGUI : ShaderGUI
 
         MaterialProperty normStrength = FindProperty("_NormalStrength", properties);
         editor.RangeProperty(normStrength, "Normal Strength");
+
+        MaterialProperty transparency = FindProperty("_Transparency", properties);
+        editor.RangeProperty(transparency, "Transparency");
     }
 
     void ShadowGroup()
     {
         MaterialProperty shadowRamp = FindProperty("_ShadowRamp", properties);
         GUIContent shadowLabel = new GUIContent(shadowRamp.displayName, "Shadow Gradient Map");
+        
         MaterialProperty shadowColor = FindProperty("_ShadowColor", properties);
         editor.TexturePropertySingleLine(shadowLabel, shadowRamp, shadowColor);
 
@@ -264,5 +268,6 @@ public class CasToonGUI : ShaderGUI
         MaterialProperty normFlatten = FindProperty("_NormFlatten", properties);
         editor.RangeProperty(normFlatten, "Flatten Light Direction");
     }
+    
 }
 #endif

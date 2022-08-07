@@ -29,6 +29,7 @@
             sampler2D _NormalMap;
             float _NormalStrength;
             sampler2D _ShadMaskMap;
+            float _Transparency;
 
             float4 _RimColor;
             float _RimSize;
@@ -109,11 +110,12 @@
                 //Shadow
                 float shade;
                 
-                shade = 0.5*dot(i.normal,L)+0.5;
+                shade = 0.5*dot(worldNormal,L)+0.5;
                 shade = clamp(0,1,tex2D(_ShadowRamp, shade.xx) + (1-_ShadowColor.w));
 
                 // sample the texture
-                float3 col = saturate(tex2D(_MainTex, i.uv).xyz * _MainColor);
+                float4 maincol = tex2D(_MainTex, i.uv);
+                float3 col = saturate(maincol.xyz * _MainColor);
                 float3 mainOut = lerp(col * _ShadowColor.xyz, col, shade);
                 mainOut = lerp(col, mainOut, tex2D(_ShadMaskMap, i.uv).xyz);
                 
@@ -172,5 +174,9 @@
                     finalOut = lerp(finalOut, mainOut * _EmisColor * _EmisPower, tex2D(_EmisTex, i.uv).xyz);
                 }
                 
-                return float4(finalOut,1); 
+                #if _IS_TRANSPARENT
+                    return float4(finalOut, maincol.w * _Transparency);
+                #endif 
+                return float4(finalOut, 1);
+
             }

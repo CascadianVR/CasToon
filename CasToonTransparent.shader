@@ -1,12 +1,13 @@
-﻿Shader".Cascadian/CasToon"
+﻿Shader".Cascadian/CasToonTransparent"
 {
-
+    
     Properties
     {
         _MainTex ("Color Map", 2D) = "white" {}
         _MainColor ("Main Color", Color) = (1,1,1,1) 
         [Normal] [NoScale] _NormalMap("Normal Map", 2D) = "bump" {}
         _NormalStrength("Normal Strength", Range(0,2)) = 1
+        _Transparency("Transparency", Range(0,1)) = 1
 
         _ShadowRamp("Shadow Ramp", 2D) = "white" {}        
         _ShadowColor("Shadow Color", Color) = (1,1,1,1)
@@ -53,11 +54,12 @@
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque"
+        Tags { "Queue"="Transparent" "RenderType"="Transparent"
         "LightMode" = "ForwardBase"}
+        Blend SrcAlpha OneMinusSrcAlpha
         LOD 100
         Cull Off
-
+        
         Pass
         {
             CGPROGRAM
@@ -66,6 +68,8 @@
             #pragma multi_compile_particles
             #pragma multi_compile_fog
             #pragma target 3.0
+
+            #define _IS_TRANSPARENT 1
 
 			#include  "castoon.cginc"
             
