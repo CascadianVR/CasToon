@@ -44,6 +44,14 @@ public class CasToonGUIV2 : ShaderGUI
     static bool metaltog = false;
     static bool emistog = false;
     static bool lightingtog = false;
+    bool maindis = false;
+    bool shadowdis = false;
+    bool rimtogdis = false;
+    bool mattogdis = false;
+    bool spectogdis = false;
+    bool metaltogdis = false;
+    bool emistogdis = false;
+    bool lightingtogdis = false;
     
     // Material Properties ____________________________________
 
@@ -90,6 +98,12 @@ public class CasToonGUIV2 : ShaderGUI
     MaterialProperty UnlitIntensity = null;
     MaterialProperty NormFlatten = null;
     MaterialProperty LightColorCont = null;
+    
+    MaterialProperty rimtogprop = null;
+    MaterialProperty mattogprop = null;
+    MaterialProperty spectogprop = null;
+    MaterialProperty metaltogprop = null;
+    MaterialProperty emistogprop = null;
     
     // Material Editor
 
@@ -139,6 +153,12 @@ public class CasToonGUIV2 : ShaderGUI
         UnlitIntensity = FindProperty("_UnlitIntensity", props, false);
         NormFlatten = FindProperty("_NormFlatten", props, false);
         LightColorCont = FindProperty("_LightColorCont", props, false);
+        
+        rimtogprop = FindProperty("_rimtog", props, false);
+        mattogprop = FindProperty("_mattog", props, false);
+        spectogprop = FindProperty("_spectog", props, false);
+        metaltogprop = FindProperty("_metaltog", props, false);
+        emistogprop = FindProperty("_emistog", props, false);
        
     }
 
@@ -148,7 +168,7 @@ public class CasToonGUIV2 : ShaderGUI
         style.font = new GUIStyle(EditorStyles.boldLabel).font;
         style.border = new RectOffset(15, 7, 4, 4);
         style.fixedHeight = 22;
-        style.contentOffset = new Vector2(25f, 4f);
+        style.contentOffset = new Vector2(1f, 4f);
 
         var rect = GUILayoutUtility.GetRect(16f, 22f, style);
         GUI.Box(rect, title, style);
@@ -180,76 +200,135 @@ public class CasToonGUIV2 : ShaderGUI
         EditorGUI.BeginChangeCheck();
 
         EditorGUILayout.Space();
-
+        
+        GUILayout.BeginHorizontal();
+        //maindis = GUILayout.Toggle(maindis, "", GUILayout.Width(20));
         main = Foldout(main, "Base Color, Normal Map and Transparency");
+        GUILayout.EndHorizontal();
         if(main)
         {
             EditorGUI.indentLevel++;
+            EditorGUI.indentLevel++;
             MainGroup(mat);
+            EditorGUI.indentLevel--;
             EditorGUI.indentLevel--;
         }
         EditorGUILayout.Space(10);
-
+        
+        GUILayout.BeginHorizontal();
+        //shadowdis = GUILayout.Toggle(shadowdis, "", GUILayout.Width(20));
         shadow = Foldout(shadow, "Shadow Settings");
+        GUILayout.EndHorizontal();
         if(shadow)
         {
             EditorGUI.indentLevel++;
+            EditorGUI.indentLevel++;
             ShadowGroup(mat);
+            EditorGUI.indentLevel--;
             EditorGUI.indentLevel--;
         }
         EditorGUILayout.Space(10);
         
+        GUILayout.BeginHorizontal();
+        rimtogdis = Convert.ToBoolean(rimtogprop.floatValue);
+        rimtogdis = GUILayout.Toggle(rimtogdis, "", GUILayout.Width(20));
+        if (rimtogdis == true) { rimtogprop.floatValue = 1f; } else { rimtogprop.floatValue = 0f; }
         rimtog = Foldout(rimtog, "Rimlight Settings");
+        GUILayout.EndHorizontal();
+        EditorGUI.BeginDisabledGroup(!rimtogdis); 
         if(rimtog)
         {
             EditorGUI.indentLevel++;
+            EditorGUI.indentLevel++;
             RimGroup(mat);
             EditorGUI.indentLevel--;
+            EditorGUI.indentLevel--;
         }
+        EditorGUI.EndDisabledGroup();
         EditorGUILayout.Space(10);
         
+        GUILayout.BeginHorizontal();
+        mattogdis = Convert.ToBoolean(mattogprop.floatValue);
+        mattogdis = GUILayout.Toggle(mattogdis, "", GUILayout.Width(20));
+        if (mattogdis == true) { mattogprop.floatValue = 1f; } else { mattogprop.floatValue = 0f; }
         mattog = Foldout(mattog, "Matcap Settings");
+        GUILayout.EndHorizontal();
+        EditorGUI.BeginDisabledGroup(!mattogdis);
         if(mattog)
         {
             EditorGUI.indentLevel++;
+            EditorGUI.indentLevel++;
             MatcapGroup(mat);
             EditorGUI.indentLevel--;
+            EditorGUI.indentLevel--;
         }
+        EditorGUI.EndDisabledGroup();
         EditorGUILayout.Space(10);
         
+        GUILayout.BeginHorizontal();
+        metaltogdis = Convert.ToBoolean(metaltogprop.floatValue);
+        metaltogdis = GUILayout.Toggle(metaltogdis, "", GUILayout.Width(20));
+        if (metaltogdis == true) { metaltogprop.floatValue = 1f; } else { metaltogprop.floatValue = 0f; }
         metaltog = Foldout(metaltog, "Metallic/Smoothness Settings");
+        GUILayout.EndHorizontal();
+        EditorGUI.BeginDisabledGroup(!metaltogdis);
         if(metaltog)
         {
             EditorGUI.indentLevel++;
+            EditorGUI.indentLevel++;
             MetalGroup(mat);
             EditorGUI.indentLevel--;
+            EditorGUI.indentLevel--;
         }
+        EditorGUI.EndDisabledGroup();
         EditorGUILayout.Space(10);
         
+        GUILayout.BeginHorizontal();
+        spectogdis = Convert.ToBoolean(spectogprop.floatValue);
+        spectogdis = GUILayout.Toggle(spectogdis, "", GUILayout.Width(20));
+        if (spectogdis == true) { spectogprop.floatValue = 1f; } else { spectogprop.floatValue = 0f; }
         spectog = Foldout(spectog, "Specular Settings");
+        GUILayout.EndHorizontal();
+        EditorGUI.BeginDisabledGroup(!spectogdis);
         if(spectog)
         {
             EditorGUI.indentLevel++;
+            EditorGUI.indentLevel++;
             SpecGroup(mat);
             EditorGUI.indentLevel--;
+            EditorGUI.indentLevel--;
         }
+        EditorGUI.EndDisabledGroup();
         EditorGUILayout.Space(10);
         
+        GUILayout.BeginHorizontal();
+        emistogdis = Convert.ToBoolean(emistogprop.floatValue);
+        emistogdis = GUILayout.Toggle(emistogdis, "", GUILayout.Width(20));
+        if (emistogdis == true) { emistogprop.floatValue = 1f; } else { emistogprop.floatValue = 0f; }
         emistog = Foldout(emistog, "Emission Settings");
-        mat.SetFloat("_emistog", emistog);
+        GUILayout.EndHorizontal();
+        EditorGUI.BeginDisabledGroup(!emistogdis);
         if(emistog)
         {
             EditorGUI.indentLevel++;
+            EditorGUI.indentLevel++;
             EmisGroup(mat);
             EditorGUI.indentLevel--;
+            EditorGUI.indentLevel--;
         }
+        EditorGUI.EndDisabledGroup();
         EditorGUILayout.Space(10);
         
+        GUILayout.BeginHorizontal();
+        //lightingtogdis = GUILayout.Toggle(lightingtogdis, "", GUILayout.Width(20));
         lightingtog = Foldout(lightingtog, "Lighting Settings");
+        GUILayout.EndHorizontal();
         if(lightingtog)
         {
             EditorGUI.indentLevel++;
+            EditorGUI.indentLevel++;
             LightingGroup(mat);
+            EditorGUI.indentLevel--;
             EditorGUI.indentLevel--;
         }
         EditorGUILayout.Space(10);
