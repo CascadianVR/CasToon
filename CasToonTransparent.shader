@@ -10,7 +10,7 @@
         _Transparency("Transparency", Range(0,1)) = 1
 
         _ShadowRamp("Shadow Ramp", 2D) = "white" {}        
-        _ShadowColor("Shadow Color", Color) = (1,1,1,1)
+        _ShadowColor("Shadow Color", Color) = (0.5,0.5,0.5,1)
         _ShadowOffset("Shadow Offset", Range(-5,5)) = 0
         _ShadMaskMap("Shadow Mask", 2D) = "white" {}
 
@@ -42,8 +42,8 @@
         _EmisColor("Emission Color", Color) = (1,1,1,1)
         _EmisPower("Emission Power", Float) = 1
 
-        _UnlitIntensity("Unlit Intensity", Range(0,1)) = 0.1
-        _NormFlatten("Normal Flatten", Range(0,1)) = 0.2
+        _UnlitIntensity("Unlit Intensity", Range(0,1)) = 0.2
+        _NormFlatten("Normal Flatten", Range(0,1)) = 0
 
         _rimtog("toggle rimlight", Float) = 0
         _mattog("toggle matcap", Float) = 0
