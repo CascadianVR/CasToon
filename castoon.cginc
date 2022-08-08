@@ -94,22 +94,22 @@
             {
                 float avgDirIntensity = (_LightColor0.r + _LightColor0.g + _LightColor0.b)/3.0;
                 float3 L = _WorldSpaceLightPos0.xyz;
+                
                 if (avgDirIntensity < 0.05f)
                 {
-                    L = float3(-1,1,1);
+                    L = normalize(float3(-1,1,1));
                 }
                 
                 float3 V = normalize(_WorldSpaceCameraPos - i.wPos);
                 float3 worldViewDir = normalize(UnityWorldSpaceViewDir(i.wPos));
                 fixed3 norm = UnpackNormal(tex2D(_NormalMap, i.uv));
-                float3 worldNormal = float3(i.tbn[0] * norm.r * _NormalStrength + i.tbn[1] * norm.g * _NormalStrength + i.tbn[2] * norm.b * float3(1,1-_NormFlatten,1));
+                float3 worldNormal = normalize(float3(i.tbn[0] * norm.r * _NormalStrength + i.tbn[1] * norm.g * _NormalStrength + i.tbn[2] * norm.b * float3(1,1-_NormFlatten,1)));
                 float3 R = reflect(-L, worldNormal);
                 float3 VRef = normalize(reflect(-worldViewDir, worldNormal));
 
                 
                 //Shadow
                 float shade;
-                
                 shade = 0.5*dot(worldNormal,L)+0.5;
                 shade = clamp(0,1,tex2D(_ShadowRamp, shade.xx) + (1-_ShadowColor.w));
 
