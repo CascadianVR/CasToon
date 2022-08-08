@@ -107,7 +107,7 @@ public class CasToonGUIV2 : ShaderGUI
     
     // Material Editor
 
-    public void FindProperties(MaterialProperty[] props)
+    public void GetProperties(MaterialProperty[] props)
     {
 
         MainTex = FindProperty("_MainTex", props, true);
@@ -162,32 +162,34 @@ public class CasToonGUIV2 : ShaderGUI
        
     }
 
-    static bool Foldout(bool display, string title)
+    // Referenced https://github.com/unity3d-jp/UnityChanToonShaderVer2_Project for foldout funtion
+    static bool Foldout(bool visible, string label)
     {
         var style = new GUIStyle("IN Title");
         style.font = new GUIStyle(EditorStyles.boldLabel).font;
         style.border = new RectOffset(15, 7, 4, 4);
         style.fixedHeight = 22;
         style.contentOffset = new Vector2(1f, 4f);
+        style.hover.textColor = new Color(0, 255, 229);
 
         var rect = GUILayoutUtility.GetRect(16f, 22f, style);
-        GUI.Box(rect, title, style);
+        GUI.Box(rect, label, style);
 
         var e = Event.current;
 
         var toggleRect = new Rect(rect.x + 4f, rect.y + 6f, 13f, 13f);
         if (e.type == EventType.Repaint)
         {
-            EditorStyles.foldout.Draw(toggleRect, false, false, display, false);
+            EditorStyles.foldout.Draw(toggleRect, false, false, visible, false);
         }
 
-        if (e.type == EventType.MouseDown && rect.Contains(e.mousePosition))
+        if (rect.Contains(e.mousePosition) && e.type == EventType.MouseDown)
         {
-            display = !display;
+            visible = !visible;
             e.Use();
         }
 
-        return display;
+        return visible;
     }
 
     override public void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
@@ -195,7 +197,7 @@ public class CasToonGUIV2 : ShaderGUI
         Material mat = materialEditor.target as Material;
         editor = materialEditor;
         EditorGUIUtility.fieldWidth = 0;
-        FindProperties(properties);
+        GetProperties(properties);
         
         EditorGUI.BeginChangeCheck();
 
