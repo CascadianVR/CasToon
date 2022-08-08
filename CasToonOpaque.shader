@@ -49,7 +49,6 @@
         _spectog("toggle specular", Float) = 0
         _metaltog("toggle metal", Float) = 0
         _emistog("toggle emissison", Float) = 0
-
     }
     SubShader
     {
@@ -67,6 +66,8 @@
             #pragma multi_compile_fog
             #pragma target 3.0
 
+            #define _IS_TRANSPARENT 0
+
 			#include  "castoon.cginc"
             
             ENDCG
@@ -74,5 +75,5 @@
 
     }
 
-    CustomEditor "CasToonGUI"
+    CustomEditor "CasToonGUIV2"
 }

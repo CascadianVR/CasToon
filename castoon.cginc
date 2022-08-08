@@ -51,13 +51,14 @@
             sampler2D _SmoothnessMaskMap;
             sampler2D _MetalMaskMap;
             float3 _fallbackColor;
-            
+            float _customcubemap;
+            samplerCUBE _CustomReflection;    
+
             float4 _SpeccColor;
             float _SpecSmoothness;
             float _SpeccSize;
             sampler2D _SpecMaskMap;
-            float _customcubemap;
-            samplerCUBE _CustomReflection;            
+
 
             sampler2D _EmisTex;
             float3 _EmisColor;
@@ -144,7 +145,7 @@
                 //Metal
                 if (_metaltog == 1)
                 {
-                    if (_invertSmooth == 1) { _RefSmoothness = 1 - (_RefSmoothness * tex2D(_SmoothnessMaskMap, i.uv));}
+                    if (_invertSmooth == 0) { _RefSmoothness = 1 - (_RefSmoothness * tex2D(_SmoothnessMaskMap, i.uv));}
                     else { _RefSmoothness = _RefSmoothness * tex2D(_SmoothnessMaskMap, i.uv);}
                     
                     half4 skyData;

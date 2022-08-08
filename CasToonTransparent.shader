@@ -26,7 +26,7 @@
     
         _Metallic("Metallic", Range(0,1)) = 1
         _RefSmoothness("Reflection Smoothness", Range(0,1)) = 0.5 
-        _invertSmooth("invery smoothness", Float) = 0
+        _invertSmooth("invert smoothness", Float) = 0
         _SmoothnessMaskMap("Smoothness Mask", 2D) = "white" {}
         _MetalMaskMap("Metal Mask", 2D) = "white" {}
         _customcubemap("Use Custom Cubemap", Float) = 0
@@ -50,7 +50,6 @@
         _spectog("toggle specular", Float) = 0
         _metaltog("toggle metal", Float) = 0
         _emistog("toggle emissison", Float) = 0
-
     }
     SubShader
     {
@@ -78,5 +77,5 @@
 
     }
 
-    CustomEditor "CasToonGUI"
+    CustomEditor "CasToonGUIV2" 
 }
