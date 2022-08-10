@@ -36,14 +36,15 @@ public class CasToonGUIV2 : ShaderGUI
 
     // Material Foldouts ______________________________________
     
-    static bool main = false;
-    static bool shadow = false;
-    static bool rimtog = false;
-    static bool mattog = false;
-    static bool spectog = false;
-    static bool metaltog = false;
-    static bool emistog = false;
-    static bool lightingtog = false;
+    bool main = false;
+    bool shadow = false;
+    bool rimtog = false;
+    bool mattog = false;
+    bool spectog = false;
+    bool metaltog = false;
+    bool emistog = false;
+    bool emistogscroll = false;
+    bool lightingtog = false;
     bool maindis = false;
     bool shadowdis = false;
     bool rimtogdis = false;
@@ -51,6 +52,7 @@ public class CasToonGUIV2 : ShaderGUI
     bool spectogdis = false;
     bool metaltogdis = false;
     bool emistogdis = false;
+    bool emistogscrolldis = false;
     bool lightingtogdis = false;
     
     // Material Properties ____________________________________
@@ -104,6 +106,7 @@ public class CasToonGUIV2 : ShaderGUI
     MaterialProperty spectogprop = null;
     MaterialProperty metaltogprop = null;
     MaterialProperty emistogprop = null;
+    MaterialProperty emistogscrollprop = null;
     
     // Material Editor
 
@@ -159,6 +162,7 @@ public class CasToonGUIV2 : ShaderGUI
         spectogprop = FindProperty("_spectog", props, false);
         metaltogprop = FindProperty("_metaltog", props, false);
         emistogprop = FindProperty("_emistog", props, false);
+        emistogscrollprop = FindProperty("_emistogscroll", props, false);
        
     }
 
@@ -204,7 +208,6 @@ public class CasToonGUIV2 : ShaderGUI
         EditorGUILayout.Space();
         
         GUILayout.BeginHorizontal();
-        //maindis = GUILayout.Toggle(maindis, "", GUILayout.Width(20));
         main = Foldout(main, "Base Color, Normal Map and Transparency");
         GUILayout.EndHorizontal();
         if(main)
@@ -218,7 +221,6 @@ public class CasToonGUIV2 : ShaderGUI
         EditorGUILayout.Space(10);
         
         GUILayout.BeginHorizontal();
-        //shadowdis = GUILayout.Toggle(shadowdis, "", GUILayout.Width(20));
         shadow = Foldout(shadow, "Shadow Settings");
         GUILayout.EndHorizontal();
         if(shadow)
@@ -230,13 +232,8 @@ public class CasToonGUIV2 : ShaderGUI
             EditorGUI.indentLevel--;
         }
         EditorGUILayout.Space(10);
-        
-        GUILayout.BeginHorizontal();
-        rimtogdis = Convert.ToBoolean(rimtogprop.floatValue);
-        rimtogdis = GUILayout.Toggle(rimtogdis, "", GUILayout.Width(20));
-        if (rimtogdis == true) { rimtogprop.floatValue = 1f; } else { rimtogprop.floatValue = 0f; }
-        rimtog = Foldout(rimtog, "Rimlight Settings");
-        GUILayout.EndHorizontal();
+
+        FoldoutToggle(ref rimtog,ref rimtogdis, rimtogprop, "Rimlight Settings");
         EditorGUI.BeginDisabledGroup(!rimtogdis); 
         if(rimtog)
         {
@@ -249,12 +246,7 @@ public class CasToonGUIV2 : ShaderGUI
         EditorGUI.EndDisabledGroup();
         EditorGUILayout.Space(10);
         
-        GUILayout.BeginHorizontal();
-        mattogdis = Convert.ToBoolean(mattogprop.floatValue);
-        mattogdis = GUILayout.Toggle(mattogdis, "", GUILayout.Width(20));
-        if (mattogdis == true) { mattogprop.floatValue = 1f; } else { mattogprop.floatValue = 0f; }
-        mattog = Foldout(mattog, "Matcap Settings");
-        GUILayout.EndHorizontal();
+        FoldoutToggle(ref mattog,ref mattogdis, mattogprop, "Matcap Settings");
         EditorGUI.BeginDisabledGroup(!mattogdis);
         if(mattog)
         {
@@ -267,12 +259,7 @@ public class CasToonGUIV2 : ShaderGUI
         EditorGUI.EndDisabledGroup();
         EditorGUILayout.Space(10);
         
-        GUILayout.BeginHorizontal();
-        metaltogdis = Convert.ToBoolean(metaltogprop.floatValue);
-        metaltogdis = GUILayout.Toggle(metaltogdis, "", GUILayout.Width(20));
-        if (metaltogdis == true) { metaltogprop.floatValue = 1f; } else { metaltogprop.floatValue = 0f; }
-        metaltog = Foldout(metaltog, "Metallic/Smoothness Settings");
-        GUILayout.EndHorizontal();
+        FoldoutToggle(ref metaltog,ref metaltogdis, metaltogprop, "Metallic/Smoothness Settings");
         EditorGUI.BeginDisabledGroup(!metaltogdis);
         if(metaltog)
         {
@@ -285,12 +272,7 @@ public class CasToonGUIV2 : ShaderGUI
         EditorGUI.EndDisabledGroup();
         EditorGUILayout.Space(10);
         
-        GUILayout.BeginHorizontal();
-        spectogdis = Convert.ToBoolean(spectogprop.floatValue);
-        spectogdis = GUILayout.Toggle(spectogdis, "", GUILayout.Width(20));
-        if (spectogdis == true) { spectogprop.floatValue = 1f; } else { spectogprop.floatValue = 0f; }
-        spectog = Foldout(spectog, "Specular Settings");
-        GUILayout.EndHorizontal();
+        FoldoutToggle(ref spectog,ref spectogdis, spectogprop, "Specular Settings");
         EditorGUI.BeginDisabledGroup(!spectogdis);
         if(spectog)
         {
@@ -303,12 +285,7 @@ public class CasToonGUIV2 : ShaderGUI
         EditorGUI.EndDisabledGroup();
         EditorGUILayout.Space(10);
         
-        GUILayout.BeginHorizontal();
-        emistogdis = Convert.ToBoolean(emistogprop.floatValue);
-        emistogdis = GUILayout.Toggle(emistogdis, "", GUILayout.Width(20));
-        if (emistogdis == true) { emistogprop.floatValue = 1f; } else { emistogprop.floatValue = 0f; }
-        emistog = Foldout(emistog, "Emission Settings");
-        GUILayout.EndHorizontal();
+        FoldoutToggle(ref emistog,ref emistogdis, emistogprop, "Emission Settings");
         EditorGUI.BeginDisabledGroup(!emistogdis);
         if(emistog)
         {
@@ -322,7 +299,6 @@ public class CasToonGUIV2 : ShaderGUI
         EditorGUILayout.Space(10);
         
         GUILayout.BeginHorizontal();
-        //lightingtogdis = GUILayout.Toggle(lightingtogdis, "", GUILayout.Width(20));
         lightingtog = Foldout(lightingtog, "Lighting Settings");
         GUILayout.EndHorizontal();
         if(lightingtog)
@@ -373,7 +349,6 @@ public class CasToonGUIV2 : ShaderGUI
     
     void RimGroup(Material mat)
     {
-        GUILayout.Label("Rimlight Settings", EditorStyles.boldLabel);
         editor.ColorProperty(RimColor, "Rim Color");
         editor.FloatProperty(RimSize, "Rim Size");
         editor.FloatProperty(RimIntensity, "Rim Intensity");
@@ -382,7 +357,6 @@ public class CasToonGUIV2 : ShaderGUI
     
     void MatcapGroup(Material mat)
     {
-        GUILayout.Label("Rimlight Settings", EditorStyles.boldLabel);
         editor.TexturePropertySingleLine(Styles.matcapTexLabel, MatCap);
         editor.RangeProperty(MatMultiply, "Mat Multiply");
         editor.RangeProperty(MatAdd, "Mat Add");
@@ -441,12 +415,38 @@ public class CasToonGUIV2 : ShaderGUI
         editor.TexturePropertySingleLine(Styles.emisTex, EmisTex);
         editor.ColorProperty(EmisColor, "Emission Color");
         editor.FloatProperty(EmisPower, "Emisison Power");
+        
+        
+        FoldoutToggle(ref emistogscroll, ref emistogscrolldis, emistogscrollprop, "Emission Scroll", 30);
+        EditorGUI.BeginDisabledGroup(!emistogscrolldis);
+        if(emistogscroll)
+        {
+            EditorGUI.indentLevel++;
+            EditorGUI.indentLevel++;
+            EditorGUILayout.PrefixLabel("Use agawg Cubemap");
+            EditorGUI.indentLevel--;
+            EditorGUI.indentLevel--;
+        }
+        EditorGUI.EndDisabledGroup();
+        EditorGUILayout.Space(10);
+        
     }
-  
+
     void LightingGroup(Material mat)
     {
         editor.RangeProperty(UnlitIntensity, "Unlit Intensity");
         editor.RangeProperty(NormFlatten, "Flatten Light Direction");
+    }
+    
+    private void FoldoutToggle(ref bool foldtog, ref bool dis, MaterialProperty prop, string title, int offset = 0)
+    {
+        GUILayout.BeginHorizontal();
+        GUILayout.Space(offset);
+        dis = Convert.ToBoolean(prop.floatValue);
+        dis = GUILayout.Toggle(dis, "", GUILayout.Width(20));
+        if (dis == true) { prop.floatValue = 1f; } else { prop.floatValue = 0f; }
+        foldtog = Foldout(foldtog, title);
+        GUILayout.EndHorizontal();
     }
     
 }

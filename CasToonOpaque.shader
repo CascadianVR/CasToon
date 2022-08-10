@@ -49,6 +49,7 @@
         _spectog("toggle specular", Float) = 0
         _metaltog("toggle metal", Float) = 0
         _emistog("toggle emissison", Float) = 0
+        _emistogscroll("toggle emissison", Float) = 0
     }
     SubShader
     {
@@ -67,11 +68,44 @@
             #pragma target 3.0
 
             #define _IS_TRANSPARENT 0
+            //#pragma multi_compile_local __ _TEST_KEYWORD
 
 			#include  "castoon.cginc"
             
             ENDCG
         }
+
+		Pass
+		{
+			Tags {"LightMode"="ShadowCaster"}
+			Cull Off
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			#pragma multi_compile_shadowcaster
+			#pragma multi_compile_instancing
+			#include "UnityCG.cginc"
+
+			struct v2f { 
+				V2F_SHADOW_CASTER;
+				float4 uv : TEXCOORD0;
+			};
+
+			v2f vert(appdata_base v)
+			{
+				v2f o;
+				UNITY_SETUP_INSTANCE_ID(v);
+				TRANSFER_SHADOW_CASTER_NORMALOFFSET(o)
+				o.uv = v.texcoord;
+				return o;
+			}
+
+			float4 frag(v2f i) : SV_Target
+			{
+				SHADOW_CASTER_FRAGMENT(i)
+			}
+			ENDCG
+		}
 
     }
 
