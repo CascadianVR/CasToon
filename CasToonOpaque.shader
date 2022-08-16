@@ -10,7 +10,7 @@
 
         _ShadowRamp("Shadow Ramp", 2D) = "white" {}        
         _ShadowColor("Shadow Color", Color) = (0.5,0.5,0.5,1)
-        _ShadowOffset("Shadow Offset", Range(-5,5)) = 0
+        _ShadowOffset("Shadow Offset", Range(-1,1)) = 0
         _ShadMaskMap("Shadow Mask", 2D) = "white" {}
 
         _RimColor ("Rim Color", Color) = (1,1,1,1) 
@@ -33,7 +33,7 @@
         _fallbackColor("Fallback Color", Color) = (1,1,1)
 
         _SpeccColor("Specular Color", Color) = (1,1,1,1)
-        _SpecSmoothness("Smoothness", Range(0,2)) = 0.5
+        _SpecSmoothness("Smoothness", Range(0,5)) = 0.5
         _SpeccSize("Size", Range(0,1)) = 0.5
         _SpecMaskMap("Specular Mask", 2D) = "white" {}
 
@@ -43,6 +43,12 @@
 
         _UnlitIntensity("Unlit Intensity", Range(0,1)) = 0.2
         _NormFlatten("Normal Flatten", Range(0,1)) = 0.0
+    	
+    	_AudioLink ("AudioLink Texture", 2D) = "black" {}
+    	_Bass ("Bass", Range(0,1)) = 0
+    	_LowMid ("LowMid", Range(0,1)) = 0
+    	_HighMid ("HighMid", Range(0,1)) = 0
+    	_Treble ("Treble", Range(0,1)) = 0
         
         _rimtog("toggle rimlight", Float) = 0
         _mattog("toggle matcap", Float) = 0
@@ -50,6 +56,7 @@
         _metaltog("toggle metal", Float) = 0
         _emistog("toggle emissison", Float) = 0
         _emistogscroll("toggle emissison", Float) = 0
+        _audioLinktog("toggle AudioLink", Float) = 0
     }
     SubShader
     {
@@ -68,9 +75,8 @@
             #pragma target 3.0
 
             #define _IS_TRANSPARENT 0
-            //#pragma multi_compile_local __ _TEST_KEYWORD
 
-			#include  "castoon.cginc"
+			#include "castoon.cginc"
             
             ENDCG
         }

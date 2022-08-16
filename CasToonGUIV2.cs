@@ -45,6 +45,7 @@ public class CasToonGUIV2 : ShaderGUI
     bool emistog = false;
     bool emistogscroll = false;
     bool lightingtog = false;
+    bool audioLinktog = false;
     bool maindis = false;
     bool shadowdis = false;
     bool rimtogdis = false;
@@ -54,6 +55,7 @@ public class CasToonGUIV2 : ShaderGUI
     bool emistogdis = false;
     bool emistogscrolldis = false;
     bool lightingtogdis = false;
+    bool audioLinktogdis = false;
     
     // Material Properties ____________________________________
 
@@ -101,12 +103,18 @@ public class CasToonGUIV2 : ShaderGUI
     MaterialProperty NormFlatten = null;
     MaterialProperty LightColorCont = null;
     
+    MaterialProperty Bass;
+    MaterialProperty LowMid;
+    MaterialProperty HighMid;
+    MaterialProperty Treble;
+    
     MaterialProperty rimtogprop = null;
     MaterialProperty mattogprop = null;
     MaterialProperty spectogprop = null;
     MaterialProperty metaltogprop = null;
     MaterialProperty emistogprop = null;
     MaterialProperty emistogscrollprop = null;
+    MaterialProperty audiolinkprop = null;
     
     // Material Editor
 
@@ -157,16 +165,22 @@ public class CasToonGUIV2 : ShaderGUI
         NormFlatten = FindProperty("_NormFlatten", props, false);
         LightColorCont = FindProperty("_LightColorCont", props, false);
         
+        Bass = FindProperty("_Bass", props, false);
+        LowMid = FindProperty("_LowMid", props, false);
+        HighMid = FindProperty("_HighMid", props, false);
+        Treble = FindProperty("_Treble", props, false);
+        
         rimtogprop = FindProperty("_rimtog", props, false);
         mattogprop = FindProperty("_mattog", props, false);
         spectogprop = FindProperty("_spectog", props, false);
         metaltogprop = FindProperty("_metaltog", props, false);
         emistogprop = FindProperty("_emistog", props, false);
         emistogscrollprop = FindProperty("_emistogscroll", props, false);
+        audiolinkprop = FindProperty("_audioLinktog", props, false);
        
     }
 
-    // Referenced https://github.com/unity3d-jp/UnityChanToonShaderVer2_Project for foldout funtion
+    // Referenced https://github.com/unity3d-jp/UnityChanToonShaderVer2_Project for foldout function (modified)
     static bool Foldout(bool visible, string label)
     {
         var style = new GUIStyle("IN Title");
@@ -416,7 +430,6 @@ public class CasToonGUIV2 : ShaderGUI
         editor.ColorProperty(EmisColor, "Emission Color");
         editor.FloatProperty(EmisPower, "Emisison Power");
         
-        
         FoldoutToggle(ref emistogscroll, ref emistogscrolldis, emistogscrollprop, "Emission Scroll", 30);
         EditorGUI.BeginDisabledGroup(!emistogscrolldis);
         if(emistogscroll)
@@ -424,6 +437,22 @@ public class CasToonGUIV2 : ShaderGUI
             EditorGUI.indentLevel++;
             EditorGUI.indentLevel++;
             EditorGUILayout.PrefixLabel("Use agawg Cubemap");
+            EditorGUI.indentLevel--;
+            EditorGUI.indentLevel--;
+        }
+        EditorGUI.EndDisabledGroup();
+        EditorGUILayout.Space(10);
+        
+        FoldoutToggle(ref audioLinktog, ref audioLinktogdis, audiolinkprop, "AudioLink", 30);
+        EditorGUI.BeginDisabledGroup(!audioLinktogdis);
+        if(audioLinktog)
+        {
+            EditorGUI.indentLevel++;
+            EditorGUI.indentLevel++;
+            editor.RangeProperty(Bass, "Bass");
+            editor.RangeProperty(LowMid, "LowMid");
+            editor.RangeProperty(HighMid, "HighMid");
+            editor.RangeProperty(Treble, "Treble");
             EditorGUI.indentLevel--;
             EditorGUI.indentLevel--;
         }

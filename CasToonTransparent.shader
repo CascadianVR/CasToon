@@ -11,7 +11,7 @@
 
         _ShadowRamp("Shadow Ramp", 2D) = "white" {}        
         _ShadowColor("Shadow Color", Color) = (0.5,0.5,0.5,1)
-        _ShadowOffset("Shadow Offset", Range(-5,5)) = 0
+        _ShadowOffset("Shadow Offset", Range(-1,1)) = 0
         _ShadMaskMap("Shadow Mask", 2D) = "white" {}
 
         _RimColor ("Rim Color", Color) = (1,1,1,1) 
@@ -34,7 +34,7 @@
         _fallbackColor("Fallback Color", Color) = (1,1,1)
 
         _SpeccColor("Specular Color", Color) = (1,1,1,1)
-        _SpecSmoothness("Smoothness", Range(0,2)) = 0.5
+        _SpecSmoothness("Smoothness", Range(0,5)) = 0.5
         _SpeccSize("Size", Range(0,1)) = 0.5
         _SpecMaskMap("Specular Mask", 2D) = "white" {}
 
@@ -51,6 +51,7 @@
         _metaltog("toggle metal", Float) = 0
         _emistog("toggle emissison", Float) = 0
     	_emistogscroll("toggle emissison", Float) = 0
+    	_audioLinktog("toggle AudioLink", Float) = 0
     }
     SubShader
     {

@@ -3,6 +3,8 @@
             #include "Lighting.cginc"
             #include "AutoLight.cginc"
             #include "UnityStandardUtils.cginc"
+            #include "AudioLink.cginc"
+
 
             struct appdata
             {
@@ -31,14 +33,14 @@
             sampler2D _ShadMaskMap;
             float _Transparency;
 
+            sampler2D _ShadowRamp;
+            float4 _ShadowColor;
+            float _ShadowOffset;
+
             float4 _RimColor;
             float _RimSize;
             float _RimIntensity;
             sampler2D _RimMaskMap;
-
-            sampler2D _ShadowRamp;
-            float4 _ShadowColor;
-            float _ShadowOffset;
 
             sampler2D _MatCap;
             float _MatMultiply;
@@ -59,7 +61,6 @@
             float _SpeccSize;
             sampler2D _SpecMaskMap;
 
-
             sampler2D _EmisTex;
             float3 _EmisColor;
             float _EmisPower;
@@ -68,11 +69,17 @@
             float _NormFlatten;
             float _LightColorCont;
 
+            float _Bass;
+            float _LowMid;
+            float _HighMid;
+            float _Treble;
+
             float _rimtog;
             float _mattog;
             float _spectog;
             float _metaltog;
             float _emistog;
+            float _audioLinktog;
 
             v2f vert (appdata v)
             {
@@ -107,7 +114,6 @@
                 float3 worldNormal = normalize(float3(i.tbn[0] * norm.r * _NormalStrength + i.tbn[1] * norm.g * _NormalStrength + i.tbn[2] * norm.b * float3(1,1-_NormFlatten,1)));
                 float3 R = reflect(-L, worldNormal);
                 float3 VRef = normalize(reflect(-worldViewDir, worldNormal));
-
                 
                 //Shadow
                 float shade;
@@ -141,7 +147,7 @@
                     mainOut = lerp(mainOut * matcap.xyz, mainOut, 1 - _MatMultiply);
                     mainOut = lerp(mainOut + matcap.xyz, mainOut, 1 - _MatAdd);
                  }
-    
+                
                 //Metal
                 if (_metaltog == 1)
                 {
@@ -155,29 +161,51 @@
                     half3 skyColor = saturate(DecodeHDR(skyData, unity_SpecCube0_HDR)) * _fallbackColor;
                     mainOut = lerp(mainOut, mainOut * skyColor, _Metallic * tex2D(_MetalMaskMap, i.uv).xyz);
                 } 
-        
-                //Specular
+                
+                //Specular | http://www.conitec.net/shaders/shader_work3.htm (general approach)
                 if (_spectog == 1)
                 {
                     float3 spec = saturate(dot(V, R) - _SpeccSize);
                     spec = smoothstep(0,_SpecSmoothness,spec);
                     spec *= tex2D(_SpecMaskMap, i.uv).xyz;
-                    mainOut = lerp(mainOut + (spec * _SpeccColor.xyz * mainOut * 5), mainOut, 1 - _SpeccColor.w);
+                    mainOut = lerp(mainOut + (spec * _SpeccColor.xyz), mainOut, 1 - _SpeccColor.w);
                 }
                 
-                
-                //Lighting Options 
-                float3 finalOut = saturate(lerp( mainOut * ShadeSHPerPixel(worldNormal, _LightColor0.rgb, i.wPos), mainOut, _UnlitIntensity));
+                //Lighting Options
+                float3 temp = ShadeSHPerPixel(worldNormal, _LightColor0, i.wPos );
+                float temp2 = (temp.x + temp.y + temp.z) / 3;
+                float3 finalOut = saturate(lerp( mainOut * temp2, mainOut, _UnlitIntensity));
                 
                 //Emission
                 if (_emistog == 1)
                 {
-                    finalOut = lerp(finalOut, mainOut * _EmisColor * _EmisPower, tex2D(_EmisTex, i.uv).xyz);
+                    if (_audioLinktog == 1)
+                    {
+                        float4 audioLink;
+                        audioLink.x = AudioLinkLerp( ALPASS_AUDIOLINK + int2( 0 , i.uv.y) ).gggg;
+                        audioLink.y = AudioLinkLerp( ALPASS_AUDIOLINK + int2( 0 , i.uv.y) + 1).gggg;
+                        audioLink.z = AudioLinkLerp( ALPASS_AUDIOLINK + int2( 0 , i.uv.y) + 2).gggg;
+                        audioLink.w = AudioLinkLerp( ALPASS_AUDIOLINK + int2( 0 , i.uv.y) + 3).gggg;
+
+                        float emisStrength = 0;
+                        emisStrength += lerp(0,audioLink.x, _Bass);
+                        emisStrength += lerp(0,audioLink.y, _LowMid);
+                        emisStrength += lerp(0,audioLink.z, _HighMid);
+                        emisStrength += lerp(0,audioLink.w, _Treble);
+                        //saturate(emisStrength);
+                    
+                        finalOut = lerp(finalOut, mainOut * _EmisColor * _EmisPower * emisStrength, tex2D(_EmisTex, i.uv).xyz);
+                    }
+                    else
+                    {
+                        finalOut = lerp(finalOut, mainOut * _EmisColor * _EmisPower, tex2D(_EmisTex, i.uv).xyz);
+                    }
                 }
                 
                 #if _IS_TRANSPARENT
                     return float4(finalOut, maincol.w * _Transparency);
-                #endif 
+                #endif
+                
                 return float4(finalOut, 1);
 
             }
