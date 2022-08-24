@@ -179,7 +179,6 @@
                 }
             ENDCG
 		}
-
     }
 
     CustomEditor "CasToonGUIV2" 
