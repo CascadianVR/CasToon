@@ -1,3 +1,7 @@
+// Upgrade NOTE: replaced tex2D unity_Lightmap with UNITY_SAMPLE_TEX2D
+
+// Upgrade NOTE: replaced tex2D unity_Lightmap with UNITY_SAMPLE_TEX2D
+
 
             #include "UnityStandardBRDF.cginc"
             #include "Lighting.cginc"
@@ -9,7 +13,7 @@
             struct appdata
             {
                 float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
+                float4 uv : TEXCOORD0;
                 float3 normal : NORMAL;
                 float4 tangent : TANGENT;
             };
@@ -69,10 +73,14 @@
             float _NormFlatten;
             float _LightColorCont;
 
+            sampler2D _HideMeshMap;
+
             float _Bass;
             float _LowMid;
             float _HighMid;
             float _Treble;
+            float _minAudioBrightness;
+            float _audioStrength;
 
             float _rimtog;
             float _mattog;
@@ -84,9 +92,10 @@
             v2f vert (appdata v)
             {
                 v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex); 
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                if (tex2Dlod(_HideMeshMap, v.uv).x < 0.5)
+                    o.vertex.w = 0.0 / 0.0;  
                 o.uv = TRANSFORM_TEX(v.uv, _MainTex); 
-
                 o.normal = UnityObjectToWorldNormal( v.normal );
                 float3 tangent = UnityObjectToWorldNormal(v.tangent);
                 float3 bitangent = cross(tangent, o.normal);
@@ -98,6 +107,11 @@
                 return o;
             }
 
+            float Remap( float value, float low1, float high1, float low2, float high2)
+            {
+                return low2 + (value - low1) * (high2 - low2) / (high1 - low1);
+            }
+            
             fixed4 frag (v2f i) : SV_Target
             {
                 float avgDirIntensity = (_LightColor0.r + _LightColor0.g + _LightColor0.b)/3.0;
@@ -172,8 +186,8 @@
                 }
                 
                 //Lighting Options
-                float3 temp = ShadeSHPerPixel(worldNormal, _LightColor0, i.wPos );
-                float temp2 = (temp.x + temp.y + temp.z) / 3;
+                float3 temp = ShadeSHPerPixel(i.normal, _LightColor0, i.wPos );
+                float temp2 = saturate((temp.x + temp.y + temp.z) / 3);
                 float3 finalOut = saturate(lerp( mainOut * temp2, mainOut, _UnlitIntensity));
                 
                 //Emission
@@ -192,8 +206,9 @@
                         emisStrength += lerp(0,audioLink.y, _LowMid);
                         emisStrength += lerp(0,audioLink.z, _HighMid);
                         emisStrength += lerp(0,audioLink.w, _Treble);
-                        //saturate(emisStrength);
-                    
+                        
+                        emisStrength = Remap(emisStrength, 0, 1, _minAudioBrightness, 1) * _audioStrength;
+                        
                         finalOut = lerp(finalOut, mainOut * _EmisColor * _EmisPower * emisStrength, tex2D(_EmisTex, i.uv).xyz);
                     }
                     else
@@ -205,7 +220,7 @@
                 #if _IS_TRANSPARENT
                     return float4(finalOut, maincol.w * _Transparency);
                 #endif
-                
+
                 return float4(finalOut, 1);
 
             }

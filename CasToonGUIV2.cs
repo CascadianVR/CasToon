@@ -32,6 +32,7 @@ public class CasToonGUIV2 : ShaderGUI
         public static GUIContent cubemap = new GUIContent("Forced Cubemap");
         public static GUIContent specMask = new GUIContent("Specular Mask");
         public static GUIContent emisTex = new GUIContent("Emisison Mask");
+        public static GUIContent meshHideMask = new GUIContent("Mesh Hide Mask");
     }
 
     // Material Foldouts ______________________________________
@@ -46,15 +47,13 @@ public class CasToonGUIV2 : ShaderGUI
     bool emistogscroll = false;
     bool lightingtog = false;
     bool audioLinktog = false;
-    bool maindis = false;
-    bool shadowdis = false;
+    bool utilitiestog = false;
     bool rimtogdis = false;
     bool mattogdis = false;
     bool spectogdis = false;
     bool metaltogdis = false;
     bool emistogdis = false;
     bool emistogscrolldis = false;
-    bool lightingtogdis = false;
     bool audioLinktogdis = false;
     
     // Material Properties ____________________________________
@@ -101,13 +100,16 @@ public class CasToonGUIV2 : ShaderGUI
 
     MaterialProperty UnlitIntensity = null;
     MaterialProperty NormFlatten = null;
-    MaterialProperty LightColorCont = null;
     
     MaterialProperty Bass;
     MaterialProperty LowMid;
     MaterialProperty HighMid;
     MaterialProperty Treble;
+    MaterialProperty AudioBrightness;
+    MaterialProperty AudioStrength;
     
+    MaterialProperty HideMeshMap = null;
+
     MaterialProperty rimtogprop = null;
     MaterialProperty mattogprop = null;
     MaterialProperty spectogprop = null;
@@ -163,13 +165,16 @@ public class CasToonGUIV2 : ShaderGUI
 
         UnlitIntensity = FindProperty("_UnlitIntensity", props, false);
         NormFlatten = FindProperty("_NormFlatten", props, false);
-        LightColorCont = FindProperty("_LightColorCont", props, false);
         
         Bass = FindProperty("_Bass", props, false);
         LowMid = FindProperty("_LowMid", props, false);
         HighMid = FindProperty("_HighMid", props, false);
         Treble = FindProperty("_Treble", props, false);
+        AudioBrightness = FindProperty("_minAudioBrightness", props, false);
+        AudioStrength = FindProperty("_audioStrength", props, false);
         
+        HideMeshMap = FindProperty("_HideMeshMap", props, false);
+
         rimtogprop = FindProperty("_rimtog", props, false);
         mattogprop = FindProperty("_mattog", props, false);
         spectogprop = FindProperty("_spectog", props, false);
@@ -325,6 +330,19 @@ public class CasToonGUIV2 : ShaderGUI
         }
         EditorGUILayout.Space(10);
         
+        GUILayout.BeginHorizontal();
+        utilitiestog = Foldout(utilitiestog, "Utilities");
+        GUILayout.EndHorizontal();
+        if(utilitiestog)
+        {
+            EditorGUI.indentLevel++;
+            EditorGUI.indentLevel++;
+            UtilitiesGroup(mat);
+            EditorGUI.indentLevel--;
+            EditorGUI.indentLevel--;
+        }
+        EditorGUILayout.Space(10);
+        
         if (EditorGUI.EndChangeCheck())
         {
             editor.PropertiesChanged();
@@ -453,6 +471,8 @@ public class CasToonGUIV2 : ShaderGUI
             editor.RangeProperty(LowMid, "LowMid");
             editor.RangeProperty(HighMid, "HighMid");
             editor.RangeProperty(Treble, "Treble");
+            editor.RangeProperty(AudioBrightness, "Minimum Brightness");
+            editor.RangeProperty(AudioStrength, "Maximum Brightness");
             EditorGUI.indentLevel--;
             EditorGUI.indentLevel--;
         }
@@ -465,6 +485,12 @@ public class CasToonGUIV2 : ShaderGUI
     {
         editor.RangeProperty(UnlitIntensity, "Unlit Intensity");
         editor.RangeProperty(NormFlatten, "Flatten Light Direction");
+        editor.TexturePropertySingleLine(Styles.meshHideMask, HideMeshMap);
+    }
+    
+    void UtilitiesGroup(Material mat)
+    {
+        editor.TexturePropertySingleLine(Styles.meshHideMask, HideMeshMap);
     }
     
     private void FoldoutToggle(ref bool foldtog, ref bool dis, MaterialProperty prop, string title, int offset = 0)

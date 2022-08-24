@@ -1,4 +1,6 @@
-﻿Shader".Cascadian/CasToonOpaque"
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader".Cascadian/CasToonOpaque"
 {
 
     Properties
@@ -49,6 +51,10 @@
     	_LowMid ("LowMid", Range(0,1)) = 0
     	_HighMid ("HighMid", Range(0,1)) = 0
     	_Treble ("Treble", Range(0,1)) = 0
+    	_minAudioBrightness ("Minimum Brightness", Range(0,1)) = 0.5
+    	_audioStrength ("Audio Strength", Range(0,5)) = 1
+    	
+    	_HideMeshMap("Hide Mesh Map", 2D) = "white" {}
         
         _rimtog("toggle rimlight", Float) = 0
         _mattog("toggle matcap", Float) = 0
@@ -60,10 +66,10 @@
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque"
+        Tags { "Queue"="Geometry" "RenderType"="Opaque"
         "LightMode" = "ForwardBase"}
         LOD 100
-        Cull Off
+        Cull Back
 
         Pass
         {
@@ -73,7 +79,8 @@
             #pragma multi_compile_particles
             #pragma multi_compile_fog
             #pragma target 3.0
-
+			#pragma multi_compile _ LIGHTMAP_ON
+            
             #define _IS_TRANSPARENT 0
 
 			#include "castoon.cginc"
@@ -84,7 +91,8 @@
 		Pass
 		{
 			Tags {"LightMode"="ShadowCaster"}
-			Cull Off
+			Cull Back
+			
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
@@ -93,24 +101,82 @@
 			#include "UnityCG.cginc"
 
 			struct v2f { 
-				V2F_SHADOW_CASTER;
-				float4 uv : TEXCOORD0;
+				float4 pos : SV_POSITION;
 			};
 
+			sampler2D _HideMeshMap;
+			
 			v2f vert(appdata_base v)
 			{
 				v2f o;
 				UNITY_SETUP_INSTANCE_ID(v);
-				TRANSFER_SHADOW_CASTER_NORMALOFFSET(o)
-				o.uv = v.texcoord;
+				o.pos = v.vertex;
+				if (tex2Dlod(_HideMeshMap, v.texcoord).x < 0.5)
+				{
+					o.pos = 0.0 / 0.0;
+					return o;
+				}
+
+				o.pos = UnityClipSpaceShadowCasterPos(v.vertex, v.normal);
+				o.pos = UnityApplyLinearShadowBias(o.pos);
+				
+				
 				return o;
 			}
 
 			float4 frag(v2f i) : SV_Target
 			{
-				SHADOW_CASTER_FRAGMENT(i)
+				return 0;
 			}
 			ENDCG
+		}
+    	
+    	Pass
+		{
+			Tags {"LightMode" = "ForwardAdd"}
+            // And it's additive to the base pass.
+            Blend One One
+            CGPROGRAM
+                #pragma vertex vert
+                #pragma fragment frag
+                #pragma multi_compile_fwdadd
+               
+                #include "UnityCG.cginc"
+                #include "AutoLight.cginc"
+ 
+                float4 _MainTex_ST;
+ 
+                struct v2f {
+                    float4  pos         : SV_POSITION;
+                    float2  uv          : TEXCOORD0;
+                    float3  normal      : TEXCOORD1;
+                    float3  lightDir    : TEXCOORD2;
+                    LIGHTING_COORDS(3,4)
+                };
+ 
+                v2f vert (appdata_base v)
+                {
+                    v2f o;
+                    o.pos = UnityObjectToClipPos (v.vertex);
+                    o.uv = TRANSFORM_TEX (v.texcoord, _MainTex).xy;
+                    o.normal = v.normal.xyz;
+                    o.lightDir = ObjSpaceLightDir (v.vertex).xyz;
+                    TRANSFER_VERTEX_TO_FRAGMENT(o);
+                    return o;
+                }
+ 
+                sampler2D _MainTex;
+                fixed4 _LightColor0;
+ 
+                fixed4 frag(v2f i) : COLOR
+                {
+                    fixed atten = LIGHT_ATTENUATION(i);
+                    fixed4 c;
+                    c.rgb = saturate(dot(i.normal, i.lightDir)) * atten * 2 * _LightColor0.rgb * tex2D(_MainTex, i.uv).rgb;
+                    c.a = 1.0;
+                    return c;
+                }
+            ENDCG
 		}
 
     }
