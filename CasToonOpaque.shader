@@ -31,6 +31,8 @@ Shader".Cascadian/CasToonOpaque"
         _SmoothnessMaskMap("Smoothness Mask", 2D) = "white" {}
         _MetalMaskMap("Metal Mask", 2D) = "white" {}
         _customcubemap("Use Custom Cubemap", Float) = 0
+    	_MultiplyReflection("Multiply Reflection", Range(0,1)) = 0
+        _AddReflection("Add Reflection", Range(0,1)) = 0
         _CustomReflection("Custom Cubemap", CUBE) = "white" {}
         _fallbackColor("Fallback Color", Color) = (1,1,1)
 
@@ -43,8 +45,9 @@ Shader".Cascadian/CasToonOpaque"
         _EmisColor("Emission Color", Color) = (1,1,1,1)
         _EmisPower("Emission Power", Float) = 1
 
-        _UnlitIntensity("Unlit Intensity", Range(0,1)) = 0.2
-        _NormFlatten("Normal Flatten", Range(0,1)) = 0.0
+        _UnlitIntensity("Unlit Intensity", Range(0,1)) = 0.1
+        _NormFlatten("Normal Flatten", Range(0,1)) = 0.5
+        _BakedColorContribution("Baked Color Contribution", Range(0,1)) = 1.0
     	
     	_AudioLink ("AudioLink Texture", 2D) = "black" {}
     	_Bass ("Bass", Range(0,1)) = 0
@@ -55,7 +58,18 @@ Shader".Cascadian/CasToonOpaque"
     	_audioStrength ("Audio Strength", Range(0,5)) = 1
     	
     	_HideMeshMap("Hide Mesh Map", 2D) = "white" {}
-        
+    	
+        _OrificeData("OrificeData", 2D) = "white" {}
+		_EntryOpenDuration("Entry Trigger Duration", Range( 0 , 1)) = 0.1
+		_Shape1Depth("Shape 1 Trigger Depth", Range( 0 , 5)) = 0.1
+		_Shape1Duration("Shape 1 Trigger Duration", Range( 0 , 1)) = 0.1
+		_Shape2Depth("Shape 2 Trigger Depth", Range( 0 , 5)) = 0.2
+		_Shape2Duration("Shape 2 Trigger Duration", Range( 0 , 1)) = 0.1
+		_Shape3Depth("Shape 3 Trigger Depth", Range( 0 , 5)) = 0.3
+		_Shape3Duration("Shape 3 Trigger Duration", Range( 0 , 1)) = 0.1
+		_BlendshapePower("Blend Shape Power", Range(0,5)) = 1
+		_BlendshapeBadScaleFix("Blend Shape Bad Scale Fix", Range(1,100)) = 1
+    	
         _rimtog("toggle rimlight", Float) = 0
         _mattog("toggle matcap", Float) = 0
         _spectog("toggle specular", Float) = 0
@@ -63,11 +77,12 @@ Shader".Cascadian/CasToonOpaque"
         _emistog("toggle emissison", Float) = 0
         _emistogscroll("toggle emissison", Float) = 0
         _audioLinktog("toggle AudioLink", Float) = 0
+        _orificetog("toggle Orifice", Float) = 0
     }
     SubShader
     {
         Tags { "Queue"="Geometry" "RenderType"="Opaque"
-        "LightMode" = "ForwardBase"}
+        "LightMode" = "ForwardBase" "VRCFallback"="Toon"}
         LOD 100
         Cull Back
 
@@ -82,7 +97,7 @@ Shader".Cascadian/CasToonOpaque"
 			#pragma multi_compile _ LIGHTMAP_ON
             
             #define _IS_TRANSPARENT 0
-
+ 
 			#include "castoon.cginc"
             
             ENDCG

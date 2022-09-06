@@ -30,6 +30,8 @@
         _SmoothnessMaskMap("Smoothness Mask", 2D) = "white" {}
         _MetalMaskMap("Metal Mask", 2D) = "white" {}
         _customcubemap("Use Custom Cubemap", Float) = 0
+        _MultiplyReflection("Multiply Reflection", Range(0,1)) = 0
+        _AddReflection("Add Reflection", Range(0,1)) = 0
         _CustomReflection("Custom Cubemap", CUBE) = "white" {}
         _fallbackColor("Fallback Color", Color) = (1,1,1)
 
@@ -42,8 +44,9 @@
         _EmisColor("Emission Color", Color) = (1,1,1,1)
         _EmisPower("Emission Power", Float) = 1
 
-        _UnlitIntensity("Unlit Intensity", Range(0,1)) = 0.2
-        _NormFlatten("Normal Flatten", Range(0,1)) = 0.0
+        _UnlitIntensity("Unlit Intensity", Range(0,1)) = 0.1
+        _NormFlatten("Normal Flatten", Range(0,1)) = 0.5
+    	_BakedColorContribution("Baked Color Contribution", Range(0,1)) = 1.0
     	
     	_AudioLink ("AudioLink Texture", 2D) = "black" {}
     	_Bass ("Bass", Range(0,1)) = 0
@@ -66,8 +69,15 @@
     SubShader
     {
         Tags { "Queue"="AlphaTest" "RenderType"="Transparent"
-        "LightMode" = "ForwardBase"}
-        Blend SrcAlpha OneMinusSrcAlpha
+        "LightMode" = "ForwardBase" "VRCFallback" = "ToonFade"}
+    	
+    	ZWrite On
+    	ZTest LEqual
+    	ZClip true
+    	
+    	BlendOp Add, Max
+        Blend SrcAlpha OneMinusSrcAlpha, One One
+    	
         LOD 100 
         Cull Back
         
@@ -120,7 +130,6 @@
 
 				o.pos = UnityClipSpaceShadowCasterPos(v.vertex, v.normal);
 				o.pos = UnityApplyLinearShadowBias(o.pos);
-				
 				
 				return o;
 			}

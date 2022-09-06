@@ -5,7 +5,7 @@ using System;
 
 public class CasToonGUIV2 : ShaderGUI
 {
-    MaterialEditor editor;
+    private MaterialEditor editor;
     
     // Enum Selection _________________________________________
     
@@ -20,103 +20,121 @@ public class CasToonGUIV2 : ShaderGUI
     
     private static class Styles
     {
-        public static GUIContent baseMapLabel = new GUIContent("Base Map");
-        public static GUIContent normalMapLabel = new GUIContent("Normal Map");
-        public static GUIContent shadowLabel = new GUIContent("Shadow Ramp");
-        public static GUIContent shadowMaskLabel = new GUIContent("Shadow Mask");
-        public static GUIContent rimlightMaskLabel = new GUIContent("Rimlight Mask");
-        public static GUIContent matcapTexLabel = new GUIContent("Matcap Map");
-        public static GUIContent matcapMaskLabel = new GUIContent("Matcap Mask");
-        public static GUIContent smoothnessMap = new GUIContent("Smoothness Map");
-        public static GUIContent metalMap = new GUIContent("Metallic Map");
-        public static GUIContent cubemap = new GUIContent("Forced Cubemap");
-        public static GUIContent specMask = new GUIContent("Specular Mask");
-        public static GUIContent emisTex = new GUIContent("Emisison Mask");
-        public static GUIContent meshHideMask = new GUIContent("Mesh Hide Mask");
+        public static readonly GUIContent baseMapLabel = new GUIContent("Base Map");
+        public static readonly GUIContent normalMapLabel = new GUIContent("Normal Map");
+        public static readonly GUIContent shadowLabel = new GUIContent("Shadow Ramp");
+        public static readonly GUIContent shadowMaskLabel = new GUIContent("Shadow Mask");
+        public static readonly GUIContent rimlightMaskLabel = new GUIContent("Rimlight Mask");
+        public static readonly GUIContent matcapTexLabel = new GUIContent("Matcap Map");
+        public static readonly GUIContent matcapMaskLabel = new GUIContent("Matcap Mask");
+        public static readonly GUIContent smoothnessMap = new GUIContent("Smoothness Map");
+        public static readonly GUIContent metalMap = new GUIContent("Metallic Map");
+        public static readonly GUIContent cubemap = new GUIContent("Forced Cubemap");
+        public static readonly GUIContent specMask = new GUIContent("Specular Mask");
+        public static readonly GUIContent emisTex = new GUIContent("Emisison Mask");
+        public static readonly GUIContent meshHideMask = new GUIContent("Mesh Hide Mask");
+        public static readonly GUIContent orificeData = new GUIContent("Orifice Data");
     }
 
     // Material Foldouts ______________________________________
-    
-    bool main = false;
-    bool shadow = false;
-    bool rimtog = false;
-    bool mattog = false;
-    bool spectog = false;
-    bool metaltog = false;
-    bool emistog = false;
-    bool emistogscroll = false;
-    bool lightingtog = false;
-    bool audioLinktog = false;
-    bool utilitiestog = false;
-    bool rimtogdis = false;
-    bool mattogdis = false;
-    bool spectogdis = false;
-    bool metaltogdis = false;
-    bool emistogdis = false;
-    bool emistogscrolldis = false;
-    bool audioLinktogdis = false;
+
+    private bool main;
+    private bool shadow;
+    private bool rimtog;
+    private bool mattog;
+    private bool spectog;
+    private bool metaltog;
+    private bool emistog;
+    private bool emistogscroll;
+    private bool lightingtog;
+    private bool audioLinktog;
+    private bool utilitiestog;
+    private bool orificetog;
+    private bool rimtogdis;
+    private bool mattogdis;
+    private bool spectogdis;
+    private bool metaltogdis;
+    private bool emistogdis;
+    private bool emistogscrolldis;
+    private bool audioLinktogdis;
+    private bool orificetogdis;
     
     // Material Properties ____________________________________
 
-    MaterialProperty MainTex = null;
-    MaterialProperty MainTex_ST = null;
-    MaterialProperty MainColor = null;
-    MaterialProperty NormalMap = null;
-    MaterialProperty NormalStrength = null;
-    MaterialProperty ShadMaskMap = null;
-    MaterialProperty Transparency = null;
+    private MaterialProperty MainTex;
+    private MaterialProperty MainTex_ST;
+    private MaterialProperty MainColor;
+    private MaterialProperty NormalMap;
+    private MaterialProperty NormalStrength;
+    private MaterialProperty ShadMaskMap;
+    private MaterialProperty Transparency;
 
-    MaterialProperty RimColor = null;
-    MaterialProperty RimSize = null;
-    MaterialProperty RimIntensity = null;
-    MaterialProperty RimMaskMap = null;
+    private MaterialProperty RimColor;
+    private MaterialProperty RimSize;
+    private MaterialProperty RimIntensity;
+    private MaterialProperty RimMaskMap;
 
-    MaterialProperty ShadowRamp = null;
-    MaterialProperty ShadowColor = null;
-    MaterialProperty ShadowOffset = null;
+    private MaterialProperty ShadowRamp;
+    private MaterialProperty ShadowColor;
+    private MaterialProperty ShadowOffset;
 
-    MaterialProperty MatCap = null;
-    MaterialProperty MatMultiply = null;
-    MaterialProperty MatAdd = null;
-    MaterialProperty MatMaskMap = null;
-            
-    MaterialProperty Metallic = null;
-    MaterialProperty RefSmoothness = null;
-    MaterialProperty invertSmooth = null;
-    MaterialProperty SmoothnessMaskMap = null;
-    MaterialProperty MetalMaskMap = null;
-    MaterialProperty fallbackColor = null;
-    MaterialProperty customcubemap = null;
-    MaterialProperty CustomReflection = null;    
-            
-    MaterialProperty SpeccColor = null;
-    MaterialProperty SpecSmoothness = null;
-    MaterialProperty SpeccSize = null;
-    MaterialProperty SpecMaskMap = null;
+    private MaterialProperty MatCap;
+    private MaterialProperty MatMultiply;
+    private MaterialProperty MatAdd;
+    private MaterialProperty MatMaskMap;
 
-    MaterialProperty EmisTex = null;
-    MaterialProperty EmisColor = null;
-    MaterialProperty EmisPower = null;
+    private MaterialProperty Metallic;
+    private MaterialProperty RefSmoothness;
+    private MaterialProperty invertSmooth;
+    private MaterialProperty SmoothnessMaskMap;
+    private MaterialProperty MetalMaskMap;
+    private MaterialProperty fallbackColor;
+    private MaterialProperty customcubemap;
+    private MaterialProperty CustomReflection;
+    private MaterialProperty MultiplyReflection;
+    private MaterialProperty AddReflection;
 
-    MaterialProperty UnlitIntensity = null;
-    MaterialProperty NormFlatten = null;
-    
-    MaterialProperty Bass;
-    MaterialProperty LowMid;
-    MaterialProperty HighMid;
-    MaterialProperty Treble;
-    MaterialProperty AudioBrightness;
-    MaterialProperty AudioStrength;
-    
-    MaterialProperty HideMeshMap = null;
+    private MaterialProperty SpeccColor;
+    private MaterialProperty SpecSmoothness;
+    private MaterialProperty SpeccSize;
+    private MaterialProperty SpecMaskMap;
 
-    MaterialProperty rimtogprop = null;
-    MaterialProperty mattogprop = null;
-    MaterialProperty spectogprop = null;
-    MaterialProperty metaltogprop = null;
-    MaterialProperty emistogprop = null;
-    MaterialProperty emistogscrollprop = null;
-    MaterialProperty audiolinkprop = null;
+    private MaterialProperty EmisTex;
+    private MaterialProperty EmisColor;
+    private MaterialProperty EmisPower;
+
+    private MaterialProperty UnlitIntensity;
+    private MaterialProperty NormFlatten;
+    private MaterialProperty BakedColorContribution;
+
+    private MaterialProperty Bass;
+    private MaterialProperty LowMid;
+    private MaterialProperty HighMid;
+    private MaterialProperty Treble;
+    private MaterialProperty AudioBrightness;
+    private MaterialProperty AudioStrength;
+
+    private MaterialProperty HideMeshMap;
+
+    private MaterialProperty _OrificeData;
+    private MaterialProperty _EntryOpenDuration;
+    private MaterialProperty _Shape1Depth;
+    private MaterialProperty _Shape1Duration;
+    private MaterialProperty _Shape2Depth;
+    private MaterialProperty _Shape2Duration;
+    private MaterialProperty _Shape3Depth;
+    private MaterialProperty _Shape3Duration;
+    private MaterialProperty _BlendshapePower;
+    private MaterialProperty _BlendshapeBadScaleFix;
+
+    private MaterialProperty rimtogprop;
+    private MaterialProperty mattogprop;
+    private MaterialProperty spectogprop;
+    private MaterialProperty metaltogprop;
+    private MaterialProperty emistogprop;
+    private MaterialProperty emistogscrollprop;
+    private MaterialProperty audiolinkprop;
+    private MaterialProperty orificeprop;
     
     // Material Editor
 
@@ -152,7 +170,9 @@ public class CasToonGUIV2 : ShaderGUI
         MetalMaskMap = FindProperty("_MetalMaskMap", props, false);
         fallbackColor = FindProperty("_fallbackColor", props, false);
         customcubemap = FindProperty("_customcubemap", props, false);
-        CustomReflection = FindProperty("_CustomReflection", props, false);;    
+        CustomReflection = FindProperty("_CustomReflection", props, false);
+        MultiplyReflection = FindProperty("_MultiplyReflection", props, false);
+        AddReflection = FindProperty("_AddReflection", props, false);
         
         SpeccColor = FindProperty("_SpeccColor", props, false);
         SpecSmoothness = FindProperty("_SpecSmoothness", props, false);
@@ -165,6 +185,7 @@ public class CasToonGUIV2 : ShaderGUI
 
         UnlitIntensity = FindProperty("_UnlitIntensity", props, false);
         NormFlatten = FindProperty("_NormFlatten", props, false);
+        BakedColorContribution = FindProperty("_BakedColorContribution", props, false);
         
         Bass = FindProperty("_Bass", props, false);
         LowMid = FindProperty("_LowMid", props, false);
@@ -174,6 +195,17 @@ public class CasToonGUIV2 : ShaderGUI
         AudioStrength = FindProperty("_audioStrength", props, false);
         
         HideMeshMap = FindProperty("_HideMeshMap", props, false);
+        
+        _OrificeData = FindProperty("_OrificeData", props, false);
+        _EntryOpenDuration = FindProperty("_EntryOpenDuration", props, false);
+        _Shape1Depth = FindProperty("_Shape1Depth", props, false);
+        _Shape1Duration = FindProperty("_Shape1Duration", props, false);
+        _Shape2Depth = FindProperty("_Shape2Depth", props, false);
+        _Shape2Duration = FindProperty("_Shape2Duration", props, false);
+        _Shape3Depth = FindProperty("_Shape3Depth", props, false);
+        _Shape3Duration = FindProperty("_Shape3Duration", props, false);
+        _BlendshapePower = FindProperty("_BlendshapePower", props, false);
+        _BlendshapeBadScaleFix = FindProperty("_BlendshapeBadScaleFix", props, false);
 
         rimtogprop = FindProperty("_rimtog", props, false);
         mattogprop = FindProperty("_mattog", props, false);
@@ -182,11 +214,12 @@ public class CasToonGUIV2 : ShaderGUI
         emistogprop = FindProperty("_emistog", props, false);
         emistogscrollprop = FindProperty("_emistogscroll", props, false);
         audiolinkprop = FindProperty("_audioLinktog", props, false);
+        orificeprop = FindProperty("_orificetog", props, false);
        
     }
 
     // Referenced https://github.com/unity3d-jp/UnityChanToonShaderVer2_Project for foldout function (modified)
-    static bool Foldout(bool visible, string label)
+    private static bool Foldout(bool visible, string label)
     {
         var style = new GUIStyle("IN Title");
         style.font = new GUIStyle(EditorStyles.boldLabel).font;
@@ -215,7 +248,7 @@ public class CasToonGUIV2 : ShaderGUI
         return visible;
     }
 
-    override public void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
+    public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
     {
         Material mat = materialEditor.target as Material;
         editor = materialEditor;
@@ -349,7 +382,7 @@ public class CasToonGUIV2 : ShaderGUI
         }
     }
 
-    void MainGroup(Material mat)
+    private void MainGroup(Material mat)
     {
         GUILayout.Label("Base Map", EditorStyles.boldLabel);
         editor.TexturePropertySingleLine(Styles.baseMapLabel, MainTex, MainColor);
@@ -370,32 +403,32 @@ public class CasToonGUIV2 : ShaderGUI
         }
     }
 
-    void ShadowGroup(Material mat)
+    private void ShadowGroup(Material mat)
     {
         GUILayout.Label("Shadow Settings", EditorStyles.boldLabel);
         editor.TexturePropertySingleLine(Styles.shadowLabel, ShadowRamp, ShadowColor);
         editor.RangeProperty(ShadowOffset, "Shadow Offset");
         editor.TexturePropertySingleLine(Styles.shadowMaskLabel, ShadMaskMap);
     }
-    
-    
-    void RimGroup(Material mat)
+
+
+    private void RimGroup(Material mat)
     {
         editor.ColorProperty(RimColor, "Rim Color");
         editor.FloatProperty(RimSize, "Rim Size");
         editor.FloatProperty(RimIntensity, "Rim Intensity");
         editor.TexturePropertySingleLine(Styles.rimlightMaskLabel, RimMaskMap);
     }
-    
-    void MatcapGroup(Material mat)
+
+    private void MatcapGroup(Material mat)
     {
         editor.TexturePropertySingleLine(Styles.matcapTexLabel, MatCap);
         editor.RangeProperty(MatMultiply, "Mat Multiply");
         editor.RangeProperty(MatAdd, "Mat Add");
         editor.TexturePropertySingleLine(Styles.matcapMaskLabel, MatMaskMap);
     }
-    
-    void MetalGroup(Material mat)
+
+    private void MetalGroup(Material mat)
     {
         editor.RangeProperty(Metallic, "Metallic");
         editor.RangeProperty(RefSmoothness, "Smoothness");
@@ -429,12 +462,16 @@ public class CasToonGUIV2 : ShaderGUI
            }
         }
         EditorGUILayout.EndHorizontal();
+        EditorGUI.BeginDisabledGroup(!Convert.ToBoolean(mat.GetFloat("_customcubemap")));
         editor.ColorProperty(fallbackColor, "Fallback Color");
         editor.TexturePropertySingleLine(Styles.cubemap, CustomReflection);
+        editor.ShaderProperty(MultiplyReflection, "Multiply Reflection");
+        editor.ShaderProperty(AddReflection, "Add Reflection");
+        EditorGUI.EndDisabledGroup();
         EditorGUI.EndDisabledGroup();
     }
-    
-    void SpecGroup(Material mat)
+
+    private void SpecGroup(Material mat)
     {
         editor.ColorProperty(SpeccColor, "Specular Color");
         editor.RangeProperty(SpecSmoothness, "Smoothness");
@@ -442,7 +479,7 @@ public class CasToonGUIV2 : ShaderGUI
         editor.TexturePropertySingleLine(Styles.specMask, SpecMaskMap);
     }
 
-    void EmisGroup(Material mat)
+    private void EmisGroup(Material mat)
     {
         editor.TexturePropertySingleLine(Styles.emisTex, EmisTex);
         editor.ColorProperty(EmisColor, "Emission Color");
@@ -481,16 +518,39 @@ public class CasToonGUIV2 : ShaderGUI
         
     }
 
-    void LightingGroup(Material mat)
+    private void LightingGroup(Material mat)
     {
         editor.RangeProperty(UnlitIntensity, "Unlit Intensity");
         editor.RangeProperty(NormFlatten, "Flatten Light Direction");
+        editor.ShaderProperty(BakedColorContribution, "Baked Light Color Contribution");
         editor.TexturePropertySingleLine(Styles.meshHideMask, HideMeshMap);
     }
-    
-    void UtilitiesGroup(Material mat)
+
+    private void UtilitiesGroup(Material mat)
     {
         editor.TexturePropertySingleLine(Styles.meshHideMask, HideMeshMap);
+        
+        FoldoutToggle(ref orificetog, ref orificetogdis, orificeprop, "Orifice", 30);
+        EditorGUI.BeginDisabledGroup(!orificetogdis);
+        if(orificetog)
+        {
+            EditorGUI.indentLevel++;
+            EditorGUI.indentLevel++;
+            editor.TexturePropertySingleLine(Styles.orificeData, _OrificeData);
+            editor.RangeProperty(_EntryOpenDuration, "Open Duration");
+            editor.RangeProperty(_Shape1Depth, "Shape 1 Depth");
+            editor.RangeProperty(_Shape1Duration, "Shape 1 Duration");
+            editor.RangeProperty(_Shape2Depth, "Shape 2 Depth");
+            editor.RangeProperty(_Shape2Duration, "Shape 2 Duration");
+            editor.RangeProperty(_Shape3Depth, "Shape 3 Depth");
+            editor.RangeProperty(_Shape3Duration, "Shape 3 Duration");
+            editor.RangeProperty(_BlendshapePower, "Blend Shape Power");
+            editor.RangeProperty(_BlendshapeBadScaleFix, "Blendshape Bad Scale Fix");
+            EditorGUI.indentLevel--;
+            EditorGUI.indentLevel--;
+        }
+        EditorGUI.EndDisabledGroup();
+        EditorGUILayout.Space(10);
     }
     
     private void FoldoutToggle(ref bool foldtog, ref bool dis, MaterialProperty prop, string title, int offset = 0)
