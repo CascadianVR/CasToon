@@ -40,6 +40,8 @@ Shader".Cascadian/CasToonOpaque"
         _SpecSmoothness("Smoothness", Range(0,5)) = 0.5
         _SpeccSize("Size", Range(0,1)) = 0.5
         _SpecMaskMap("Specular Mask", 2D) = "white" {}
+    	
+    	_OutlineColor("Outline Color", Color) = (0,0,0,1)
 
         _EmisTex("Emission Map", 2D) = "white" {}
         _EmisColor("Emission Color", Color) = (1,1,1,1)
@@ -57,7 +59,9 @@ Shader".Cascadian/CasToonOpaque"
     	_minAudioBrightness ("Minimum Brightness", Range(0,1)) = 0.5
     	_audioStrength ("Audio Strength", Range(0,5)) = 1
     	
+    	// Utilities
     	_HideMeshMap("Hide Mesh Map", 2D) = "white" {}
+    	[Enum(OFF,0,FRONT,1,BACK,2)] _CullingMode("Culling Mode", int) = 2
     	
         _OrificeData("OrificeData", 2D) = "white" {}
 		_EntryOpenDuration("Entry Trigger Duration", Range( 0 , 1)) = 0.1
@@ -69,8 +73,8 @@ Shader".Cascadian/CasToonOpaque"
 		_Shape3Duration("Shape 3 Trigger Duration", Range( 0 , 1)) = 0.1
 		_BlendshapePower("Blend Shape Power", Range(0,5)) = 1
 		_BlendshapeBadScaleFix("Blend Shape Bad Scale Fix", Range(1,100)) = 1
-    	
-        _rimtog("toggle rimlight", Float) = 0
+        
+    	_rimtog("toggle rimlight", Float) = 0
         _mattog("toggle matcap", Float) = 0
         _spectog("toggle specular", Float) = 0
         _metaltog("toggle metal", Float) = 0
@@ -81,13 +85,14 @@ Shader".Cascadian/CasToonOpaque"
     }
     SubShader
     {
-        Tags { "Queue"="Geometry" "RenderType"="Opaque"
-        "LightMode" = "ForwardBase" "VRCFallback"="Toon"}
-        LOD 100
-        Cull Back
-
-        Pass
+    	
+	    Pass // Main
         {
+        	Tags { "Queue"="Geometry" "RenderType"="Opaque"
+	        "LightMode" = "ForwardBase" "VRCFallback"="Toon"}
+	        LOD 100
+	        Cull [_CullingMode]
+        	
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -103,10 +108,71 @@ Shader".Cascadian/CasToonOpaque"
             ENDCG
         }
 
-		Pass
+    	Pass //Outline
+        {
+        	Tags { "Queue"="Geometry" "RenderType"="Opaque"}
+	        LOD 100
+	        Cull FRONT
+        	
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_particles
+            #pragma multi_compile_fog
+            #pragma target 3.0
+			#pragma multi_compile _ LIGHTMAP_ON
+
+            #include "UnityCG.cginc"
+            #include "Lighting.cginc"
+
+			struct appdata {
+			    float4 vertex : POSITION;
+			    float3 normal : NORMAL;
+			    UNITY_VERTEX_INPUT_INSTANCE_ID
+			};
+            
+			struct v2f { 
+				float4 pos : SV_POSITION;
+				float3 normal : TEXCOORD0;
+			};
+
+			float4 _OutlineColor;
+            float _outlinetog;
+            
+			v2f vert(appdata v)
+			{
+				v2f o;
+				if (_outlinetog == 0)
+				{
+					o.pos = 0.0/0.0;
+				}
+				else
+				{
+					float4 objPos = mul ( unity_ObjectToWorld, float4(0,0,0,1) );
+					float3 dist = distance(objPos.rgb,_WorldSpaceCameraPos);
+					o.pos = UnityObjectToClipPos(float4(v.vertex.xyz + v.normal * 0.01,1));
+				}
+				
+				return o;
+			}
+
+            float4 frag(v2f i) : SV_Target
+			{
+				float3 bakedLight = saturate(ShadeSHPerPixel(lerp(float3(0.33,0.33,0.33),i.normal,0.5), _LightColor0, i.pos ));
+			    bakedLight = ((bakedLight.x + bakedLight.y + bakedLight.z) / 3).xxx;
+
+				float3 color = min(_OutlineColor.xyz, _OutlineColor.xyz * bakedLight);
+				
+				return float4(color,1);
+			}
+            
+			ENDCG
+        }
+    	
+	    Pass // Cast Shadows
 		{
 			Tags {"LightMode"="ShadowCaster"}
-			Cull Back
+			Cull [_CullingMode]
 			
 			CGPROGRAM
 			#pragma vertex vert
@@ -135,7 +201,6 @@ Shader".Cascadian/CasToonOpaque"
 				o.pos = UnityClipSpaceShadowCasterPos(v.vertex, v.normal);
 				o.pos = UnityApplyLinearShadowBias(o.pos);
 				
-				
 				return o;
 			}
 
@@ -146,7 +211,7 @@ Shader".Cascadian/CasToonOpaque"
 			ENDCG
 		}
     	
-    	Pass
+    	Pass // Realtime Lights Contribution
 		{
 			Tags {"LightMode" = "ForwardAdd"}
             // And it's additive to the base pass.

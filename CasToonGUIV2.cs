@@ -12,6 +12,9 @@ public class CasToonGUIV2 : ShaderGUI
     public enum _CullingMode{
         CullingOff, FrontCulling, BackCulling
     }
+
+    public _CullingMode cullingMode;
+    
     public enum _RenderingMode{
         Opaque, Transparent
     }
@@ -38,26 +41,28 @@ public class CasToonGUIV2 : ShaderGUI
 
     // Material Foldouts ______________________________________
 
-    private bool main;
-    private bool shadow;
-    private bool rimtog;
-    private bool mattog;
-    private bool spectog;
-    private bool metaltog;
-    private bool emistog;
-    private bool emistogscroll;
-    private bool lightingtog;
-    private bool audioLinktog;
-    private bool utilitiestog;
-    private bool orificetog;
-    private bool rimtogdis;
-    private bool mattogdis;
-    private bool spectogdis;
-    private bool metaltogdis;
-    private bool emistogdis;
-    private bool emistogscrolldis;
-    private bool audioLinktogdis;
-    private bool orificetogdis;
+    private static bool main;
+    private static bool shadow;
+    private static bool rimtog;
+    private static bool mattog;
+    private static bool spectog;
+    private static bool metaltog;
+    private static bool outlinetog;
+    private static bool emistog;
+    private static bool emistogscroll;
+    private static bool lightingtog;
+    private static bool audioLinktog;
+    private static bool utilitiestog;
+    private static bool orificetog;
+    private static bool rimtogdis;
+    private static bool mattogdis;
+    private static bool spectogdis;
+    private static bool metaltogdis;
+    private static bool outlinetogdis;
+    private static bool emistogdis;
+    private static bool emistogscrolldis;
+    private static bool audioLinktogdis;
+    private static bool orificetogdis;
     
     // Material Properties ____________________________________
 
@@ -98,6 +103,8 @@ public class CasToonGUIV2 : ShaderGUI
     private MaterialProperty SpecSmoothness;
     private MaterialProperty SpeccSize;
     private MaterialProperty SpecMaskMap;
+    
+    private MaterialProperty OutlineColor;
 
     private MaterialProperty EmisTex;
     private MaterialProperty EmisColor;
@@ -115,7 +122,7 @@ public class CasToonGUIV2 : ShaderGUI
     private MaterialProperty AudioStrength;
 
     private MaterialProperty HideMeshMap;
-
+    private MaterialProperty CullingMode;
     private MaterialProperty _OrificeData;
     private MaterialProperty _EntryOpenDuration;
     private MaterialProperty _Shape1Depth;
@@ -131,12 +138,15 @@ public class CasToonGUIV2 : ShaderGUI
     private MaterialProperty mattogprop;
     private MaterialProperty spectogprop;
     private MaterialProperty metaltogprop;
+    private MaterialProperty outlinetogprop;
     private MaterialProperty emistogprop;
     private MaterialProperty emistogscrollprop;
     private MaterialProperty audiolinkprop;
     private MaterialProperty orificeprop;
     
     // Material Editor
+    
+    Gradient gradient = new Gradient();
 
     public void GetProperties(MaterialProperty[] props)
     {
@@ -178,6 +188,8 @@ public class CasToonGUIV2 : ShaderGUI
         SpecSmoothness = FindProperty("_SpecSmoothness", props, false);
         SpeccSize = FindProperty("_SpeccSize", props, false);
         SpecMaskMap = FindProperty("_SpecMaskMap", props, false);
+        
+        OutlineColor = FindProperty("_OutlineColor", props, false);
 
         EmisTex = FindProperty("_EmisTex", props, false);
         EmisColor = FindProperty("_EmisColor", props, false);
@@ -195,6 +207,7 @@ public class CasToonGUIV2 : ShaderGUI
         AudioStrength = FindProperty("_audioStrength", props, false);
         
         HideMeshMap = FindProperty("_HideMeshMap", props, false);
+        CullingMode = FindProperty("_CullingMode", props, false);
         
         _OrificeData = FindProperty("_OrificeData", props, false);
         _EntryOpenDuration = FindProperty("_EntryOpenDuration", props, false);
@@ -211,6 +224,7 @@ public class CasToonGUIV2 : ShaderGUI
         mattogprop = FindProperty("_mattog", props, false);
         spectogprop = FindProperty("_spectog", props, false);
         metaltogprop = FindProperty("_metaltog", props, false);
+        outlinetogprop = FindProperty("_outlinetog", props, false);
         emistogprop = FindProperty("_emistog", props, false);
         emistogscrollprop = FindProperty("_emistogscroll", props, false);
         audiolinkprop = FindProperty("_audioLinktog", props, false);
@@ -337,6 +351,19 @@ public class CasToonGUIV2 : ShaderGUI
         EditorGUI.EndDisabledGroup();
         EditorGUILayout.Space(10);
         
+        // FoldoutToggle(ref outlinetog,ref outlinetogdis, outlinetogprop, "Outline Settings");
+        // EditorGUI.BeginDisabledGroup(!outlinetogdis);
+        // if(outlinetog)
+        // {
+        //     EditorGUI.indentLevel++;
+        //     EditorGUI.indentLevel++;
+        //     OutlineGroup(mat);
+        //     EditorGUI.indentLevel--;
+        //     EditorGUI.indentLevel--;
+        // }
+        // EditorGUI.EndDisabledGroup();
+        // EditorGUILayout.Space(10);
+        
         FoldoutToggle(ref emistog,ref emistogdis, emistogprop, "Emission Settings");
         EditorGUI.BeginDisabledGroup(!emistogdis);
         if(emistog)
@@ -370,7 +397,7 @@ public class CasToonGUIV2 : ShaderGUI
         {
             EditorGUI.indentLevel++;
             EditorGUI.indentLevel++;
-            UtilitiesGroup(mat);
+            UtilitiesGroup(ref mat);
             EditorGUI.indentLevel--;
             EditorGUI.indentLevel--;
         }
@@ -384,14 +411,15 @@ public class CasToonGUIV2 : ShaderGUI
 
     private void MainGroup(Material mat)
     {
-        GUILayout.Label("Base Map", EditorStyles.boldLabel);
+        GUILayout.Label(new GUIContent("Base Color Map","Main Color Texture"), EditorStyles.boldLabel);
         editor.TexturePropertySingleLine(Styles.baseMapLabel, MainTex, MainColor);
         editor.TextureScaleOffsetProperty(MainTex);
         
         EditorGUILayout.Space(10); 
 
-        GUILayout.Label("Normal Map", EditorStyles.boldLabel);
+        GUILayout.Label(new GUIContent("Normal Map","Main Normal Map"), EditorStyles.boldLabel);
         editor.TexturePropertySingleLine(Styles.normalMapLabel, NormalMap);
+        
         editor.RangeProperty(NormalStrength, "Normal Strength");
 
         EditorGUILayout.Space(10);
@@ -407,6 +435,15 @@ public class CasToonGUIV2 : ShaderGUI
     {
         GUILayout.Label("Shadow Settings", EditorStyles.boldLabel);
         editor.TexturePropertySingleLine(Styles.shadowLabel, ShadowRamp, ShadowColor);
+        //gradient = EditorGUILayout.GradientField(gradient);
+        //Texture2D tex = GradientTexGen.Create(gradient);
+        //if (tex != null)
+       // {
+       //     AssetDatabase.CreateAsset(tex, Application.dataPath + "/ShadowRamps/" + mat.name.Replace(" ", "") + ".png");
+       //     AssetDatabase.SaveAssets();
+       //     mat.SetTexture("_ShadowRamp", tex);
+       // }
+        
         editor.RangeProperty(ShadowOffset, "Shadow Offset");
         editor.TexturePropertySingleLine(Styles.shadowMaskLabel, ShadMaskMap);
     }
@@ -478,6 +515,11 @@ public class CasToonGUIV2 : ShaderGUI
         editor.RangeProperty(SpeccSize, "Size");
         editor.TexturePropertySingleLine(Styles.specMask, SpecMaskMap);
     }
+    
+    private void OutlineGroup(Material mat)
+    {
+        editor.ColorProperty(OutlineColor, "Outline Color");
+    }
 
     private void EmisGroup(Material mat)
     {
@@ -523,43 +565,44 @@ public class CasToonGUIV2 : ShaderGUI
         editor.RangeProperty(UnlitIntensity, "Unlit Intensity");
         editor.RangeProperty(NormFlatten, "Flatten Light Direction");
         editor.ShaderProperty(BakedColorContribution, "Baked Light Color Contribution");
-        editor.TexturePropertySingleLine(Styles.meshHideMask, HideMeshMap);
     }
 
-    private void UtilitiesGroup(Material mat)
+    private void UtilitiesGroup(ref Material mat)
     {
         editor.TexturePropertySingleLine(Styles.meshHideMask, HideMeshMap);
         
-        FoldoutToggle(ref orificetog, ref orificetogdis, orificeprop, "Orifice", 30);
-        EditorGUI.BeginDisabledGroup(!orificetogdis);
-        if(orificetog)
-        {
-            EditorGUI.indentLevel++;
-            EditorGUI.indentLevel++;
-            editor.TexturePropertySingleLine(Styles.orificeData, _OrificeData);
-            editor.RangeProperty(_EntryOpenDuration, "Open Duration");
-            editor.RangeProperty(_Shape1Depth, "Shape 1 Depth");
-            editor.RangeProperty(_Shape1Duration, "Shape 1 Duration");
-            editor.RangeProperty(_Shape2Depth, "Shape 2 Depth");
-            editor.RangeProperty(_Shape2Duration, "Shape 2 Duration");
-            editor.RangeProperty(_Shape3Depth, "Shape 3 Depth");
-            editor.RangeProperty(_Shape3Duration, "Shape 3 Duration");
-            editor.RangeProperty(_BlendshapePower, "Blend Shape Power");
-            editor.RangeProperty(_BlendshapeBadScaleFix, "Blendshape Bad Scale Fix");
-            EditorGUI.indentLevel--;
-            EditorGUI.indentLevel--;
-        }
+        editor.ShaderProperty(CullingMode, "Culling Mode");
+
+        // FoldoutToggle(ref orificetog, ref orificetogdis, orificeprop, "Orifice", 30);
+        // EditorGUI.BeginDisabledGroup(!orificetogdis);
+        // if(orificetog)
+        // {
+        //     EditorGUI.indentLevel++;
+        //     EditorGUI.indentLevel++;
+        //     editor.TexturePropertySingleLine(Styles.orificeData, _OrificeData);
+        //     editor.RangeProperty(_EntryOpenDuration, "Open Duration");
+        //     editor.RangeProperty(_Shape1Depth, "Shape 1 Depth");
+        //     editor.RangeProperty(_Shape1Duration, "Shape 1 Duration");
+        //     editor.RangeProperty(_Shape2Depth, "Shape 2 Depth");
+        //     editor.RangeProperty(_Shape2Duration, "Shape 2 Duration");
+        //     editor.RangeProperty(_Shape3Depth, "Shape 3 Depth");
+        //     editor.RangeProperty(_Shape3Duration, "Shape 3 Duration");
+        //     editor.RangeProperty(_BlendshapePower, "Blend Shape Power");
+        //     editor.RangeProperty(_BlendshapeBadScaleFix, "Blendshape Bad Scale Fix");
+        //     EditorGUI.indentLevel--;
+        //     EditorGUI.indentLevel--;
+        // }
         EditorGUI.EndDisabledGroup();
         EditorGUILayout.Space(10);
     }
-    
+
     private void FoldoutToggle(ref bool foldtog, ref bool dis, MaterialProperty prop, string title, int offset = 0)
     {
         GUILayout.BeginHorizontal();
         GUILayout.Space(offset);
         dis = Convert.ToBoolean(prop.floatValue);
         dis = GUILayout.Toggle(dis, "", GUILayout.Width(20));
-        if (dis == true) { prop.floatValue = 1f; } else { prop.floatValue = 0f; }
+        prop.floatValue = dis ? 1f : 0f;
         foldtog = Foldout(foldtog, title);
         GUILayout.EndHorizontal();
     }

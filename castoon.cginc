@@ -28,7 +28,7 @@ struct v2f
     float3 tbn[3] : TEXCOORD3; //4&5
 };
 
-
+// Main Options
 sampler2D _MainTex;
 float4 _MainTex_ST;
 float3 _MainColor;
@@ -37,20 +37,24 @@ float _NormalStrength;
 sampler2D _ShadMaskMap;
 float _Transparency;
 
+// Shadows
 sampler2D _ShadowRamp;
 float4 _ShadowColor;
 float _ShadowOffset;
 
+// Rimlighting
 float4 _RimColor;
 float _RimSize;
 float _RimIntensity;
 sampler2D _RimMaskMap;
 
+// Matcaps
 sampler2D _MatCap;
 float _MatMultiply;
 float _MatAdd;
 sampler2D _MatMaskMap;
 
+// Metallics and Reflection
 float _Metallic;
 float _RefSmoothness;
 float _invertSmooth;
@@ -62,21 +66,26 @@ samplerCUBE _CustomReflection;
 float _MultiplyReflection;
 float _AddReflection;
 
+// Fake Specular
 float4 _SpeccColor;
 float _SpecSmoothness;
 float _SpeccSize;
 sampler2D _SpecMaskMap;
 
+// Emission
 sampler2D _EmisTex;
 float3 _EmisColor;
 float _EmisPower;
 
+// Lighting
 float _UnlitIntensity;
 float _NormFlatten;
 float _BakedColorContribution;
 
+// Utilities
 sampler2D _HideMeshMap;
 
+// Audio Link
 float _Bass;
 float _LowMid;
 float _HighMid;
@@ -84,12 +93,14 @@ float _Treble;
 float _minAudioBrightness;
 float _audioStrength;
 
+// UI folder disables
 float _rimtog;
 float _mattog;
 float _spectog;
 float _metaltog;
 float _emistog;
 float _audioLinktog;
+float _orificetog;
 
 v2f vert (appdata v)
 {
@@ -100,9 +111,9 @@ v2f vert (appdata v)
         o.vertex.w = 0.0 / 0.0;  
     o.uv = TRANSFORM_TEX(v.uv, _MainTex);
     o.normal = UnityObjectToWorldNormal( v.normal );
-    float3 tangent = UnityObjectToWorldNormal(v.tangent);
-    float3 bitangent = cross(tangent, o.normal);
-    o.tbn[0] = tangent;
+    float4 tangent = float4(UnityObjectToWorldDir(v.tangent.xyz), v.tangent.w);
+    float3 bitangent = cross(o.normal,tangent) * tangent.w ;
+    o.tbn[0] = tangent; 
     o.tbn[1] = bitangent;
     o.tbn[2] = o.normal;
     TRANSFER_VERTEX_TO_FRAGMENT(o);
@@ -130,8 +141,10 @@ fixed4 frag (v2f i) : SV_Target
     
     float3 V = normalize(_WorldSpaceCameraPos - i.wPos);
     float3 worldViewDir = normalize(UnityWorldSpaceViewDir(i.wPos));
-    fixed3 norm = UnpackNormalWithScale(tex2D(_NormalMap, i.uv), _NormalStrength);
-    float3 worldNormal = normalize(float3(i.tbn[0] * norm.r + i.tbn[1] * norm.g + i.tbn[2])* norm.b);
+    
+    fixed3 norm = UnpackScaleNormal(tex2D(_NormalMap, i.uv), _NormalStrength);
+    float3 worldNormal = (i.tbn[0] * norm.r + i.tbn[1] * norm.g + i.tbn[2]* norm.b);
+    
     float3 R = reflect(-L, worldNormal);
     float3 VRef = normalize(reflect(-worldViewDir, worldNormal));
 
@@ -148,7 +161,9 @@ fixed4 frag (v2f i) : SV_Target
     //Rimlight
     if (_rimtog == 1)
     {
-        float3 rimLight = smoothstep(0.6, 1.0, saturate(1 - dot(worldNormal, V) * _RimSize) * _RimIntensity);
+        float dotprod = dot(worldNormal, V);
+        dotprod = saturate(abs(dotprod) * _RimSize);
+        float3 rimLight = saturate(smoothstep(0.6, 1.0, 1- dotprod) * _RimIntensity);
         rimLight *= tex2D(_RimMaskMap, i.uv).xyz;
         rimLight = lerp(mainOut, _RimColor.xyz, rimLight);
         mainOut = lerp(mainOut, rimLight, _RimColor.w);
@@ -172,7 +187,7 @@ fixed4 frag (v2f i) : SV_Target
         float roughness = 1-_RefSmoothness;
         roughness *= (1.7 - 0.7) * roughness;
         
-        if (_invertSmooth == 0) { roughness = 1 - _RefSmoothness * tex2D(_SmoothnessMaskMap, i.uv);}
+        if (_invertSmooth == 0) { roughness = _RefSmoothness * (1 - tex2D(_SmoothnessMaskMap, i.uv));}
         else { roughness = _RefSmoothness * tex2D(_SmoothnessMaskMap, i.uv);}
         
         float3 skyColorFallback;
@@ -187,8 +202,8 @@ fixed4 frag (v2f i) : SV_Target
             skyColor = lerp(skyColor, skyColor + skyColorFallback, _AddReflection);
         }
 
-        roughness     = (1 - _RefSmoothness) * (1 - _RefSmoothness);
-        float3 metallicSpec = max(0, GGXTerm(max(0, dot( worldNormal, normalize(worldViewDir + L))), roughness*2)) * col;
+        roughness = saturate(1-lerp (roughness,(1 - _RefSmoothness*0.3) * (1 - _RefSmoothness*0.3), 1));
+        float3 metallicSpec = max(0, GGXTerm(max(0, dot( worldNormal, normalize(worldViewDir + L))), roughness)) * col;
 
         mainOut = lerp(mainOut, mainOut + metallicSpec, 0.5);
         mainOut = lerp(mainOut, mainOut * skyColor, _Metallic * tex2D(_MetalMaskMap, i.uv).xyz);

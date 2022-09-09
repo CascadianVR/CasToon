@@ -57,14 +57,16 @@
     	_audioStrength ("Audio Strength", Range(0,5)) = 1
         
     	_HideMeshMap("Hide Mesh Map", 2D) = "white" {}
+    	[Enum(OFF,0,FRONT,1,BACK,2)] _CullingMode("Culling Mode", int) = 2
     	
-        _rimtog("toggle rimlight", Float) = 0
+    	_rimtog("toggle rimlight", Float) = 0
         _mattog("toggle matcap", Float) = 0
         _spectog("toggle specular", Float) = 0
         _metaltog("toggle metal", Float) = 0
         _emistog("toggle emissison", Float) = 0
         _emistogscroll("toggle emissison", Float) = 0
         _audioLinktog("toggle AudioLink", Float) = 0
+        _orificetog("toggle Orifice", Float) = 0
     }
     SubShader
     {
@@ -78,8 +80,9 @@
     	BlendOp Add, Max
         Blend SrcAlpha OneMinusSrcAlpha, One One
     	
+    	
         LOD 100 
-        Cull Back
+        Cull [_CullingMode]
         
         Pass
         {
