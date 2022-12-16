@@ -14,6 +14,7 @@ Shader".Cascadian/CasToonOpaque"
         _ShadowColor("Shadow Color", Color) = (0.5,0.5,0.5,1)
         _ShadowOffset("Shadow Offset", Range(-1,1)) = 0
         _ShadMaskMap("Shadow Mask", 2D) = "white" {}
+    	_ShadowMaskStrength("Shadow Mask Strength", Range(0,1)) = 0
 
         _RimColor ("Rim Color", Color) = (1,1,1,1) 
         _RimSize ("Rim Size", Float) = 1.5
@@ -27,7 +28,9 @@ Shader".Cascadian/CasToonOpaque"
     
         _Metallic("Metallic", Range(0,1)) = 1
         _RefSmoothness("Reflection Smoothness", Range(0,1)) = 0.5 
-        _invertSmooth("invery smoothness", Float) = 0
+        _invertSmooth("invert smoothness", Float) = 0
+        _metallicSpecIntensity("Metallic Specular Size", Range(0,1)) = 1
+        _metallicSpecSize("Metallic Specular Intensity", Range(0,1)) = 1
         _SmoothnessMaskMap("Smoothness Mask", 2D) = "white" {}
         _MetalMaskMap("Metal Mask", 2D) = "white" {}
         _customcubemap("Use Custom Cubemap", Float) = 0
@@ -42,6 +45,8 @@ Shader".Cascadian/CasToonOpaque"
         _SpecMaskMap("Specular Mask", 2D) = "white" {}
     	
     	_OutlineColor("Outline Color", Color) = (0,0,0,1)
+    	_outlineSize("Outline Size", float) = 1
+    	_OutlineMask("Outline Mask", 2D) = "white" {}
 
         _EmisTex("Emission Map", 2D) = "white" {}
         _EmisColor("Emission Color", Color) = (1,1,1,1)
@@ -78,6 +83,7 @@ Shader".Cascadian/CasToonOpaque"
         _mattog("toggle matcap", Float) = 0
         _spectog("toggle specular", Float) = 0
         _metaltog("toggle metal", Float) = 0
+        _outlinetog("toggle outline", Float) = 0
         _emistog("toggle emissison", Float) = 0
         _emistogscroll("toggle emissison", Float) = 0
         _audioLinktog("toggle AudioLink", Float) = 0
@@ -128,6 +134,7 @@ Shader".Cascadian/CasToonOpaque"
 			struct appdata {
 			    float4 vertex : POSITION;
 			    float3 normal : NORMAL;
+			    float4 uv : TEXCOORD0;
 			    UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
             
@@ -136,7 +143,9 @@ Shader".Cascadian/CasToonOpaque"
 				float3 normal : TEXCOORD0;
 			};
 
+            sampler2D _OutlineMask;
 			float4 _OutlineColor;
+            float _outlineSize;
             float _outlinetog;
             
 			v2f vert(appdata v)
@@ -149,8 +158,7 @@ Shader".Cascadian/CasToonOpaque"
 				else
 				{
 					float4 objPos = mul ( unity_ObjectToWorld, float4(0,0,0,1) );
-					float3 dist = distance(objPos.rgb,_WorldSpaceCameraPos);
-					o.pos = UnityObjectToClipPos(float4(v.vertex.xyz + v.normal * 0.01,1));
+					o.pos = UnityObjectToClipPos(float4(v.vertex.xyz + v.normal * 0.01 * _outlineSize * tex2Dlod(_OutlineMask, v.uv),1));
 				}
 				
 				return o;

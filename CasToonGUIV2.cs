@@ -2,6 +2,7 @@
 #if UNITY_EDITOR
 using UnityEditor;
 using System;
+using CasToon.CasToon;
 
 public class CasToonGUIV2 : ShaderGUI
 {
@@ -71,7 +72,6 @@ public class CasToonGUIV2 : ShaderGUI
     private MaterialProperty MainColor;
     private MaterialProperty NormalMap;
     private MaterialProperty NormalStrength;
-    private MaterialProperty ShadMaskMap;
     private MaterialProperty Transparency;
 
     private MaterialProperty RimColor;
@@ -82,6 +82,8 @@ public class CasToonGUIV2 : ShaderGUI
     private MaterialProperty ShadowRamp;
     private MaterialProperty ShadowColor;
     private MaterialProperty ShadowOffset;
+    private MaterialProperty ShadMaskMap;
+    private MaterialProperty ShadowMaskStrength;
 
     private MaterialProperty MatCap;
     private MaterialProperty MatMultiply;
@@ -90,11 +92,11 @@ public class CasToonGUIV2 : ShaderGUI
 
     private MaterialProperty Metallic;
     private MaterialProperty RefSmoothness;
-    private MaterialProperty invertSmooth;
+    private MaterialProperty metallicSpecIntensity;
+    private MaterialProperty metallicSpecSize;
     private MaterialProperty SmoothnessMaskMap;
     private MaterialProperty MetalMaskMap;
     private MaterialProperty fallbackColor;
-    private MaterialProperty customcubemap;
     private MaterialProperty CustomReflection;
     private MaterialProperty MultiplyReflection;
     private MaterialProperty AddReflection;
@@ -105,6 +107,8 @@ public class CasToonGUIV2 : ShaderGUI
     private MaterialProperty SpecMaskMap;
     
     private MaterialProperty OutlineColor;
+    private MaterialProperty OutlineSize;
+    private MaterialProperty OutlineMask;
 
     private MaterialProperty EmisTex;
     private MaterialProperty EmisColor;
@@ -143,10 +147,6 @@ public class CasToonGUIV2 : ShaderGUI
     private MaterialProperty emistogscrollprop;
     private MaterialProperty audiolinkprop;
     private MaterialProperty orificeprop;
-    
-    // Material Editor
-    
-    Gradient gradient = new Gradient();
 
     public void GetProperties(MaterialProperty[] props)
     {
@@ -156,7 +156,6 @@ public class CasToonGUIV2 : ShaderGUI
         MainColor = FindProperty("_MainColor", props, true);
         NormalMap = FindProperty("_NormalMap", props, false);
         NormalStrength = FindProperty("_NormalStrength", props, false);
-        ShadMaskMap = FindProperty("_ShadMaskMap", props, false);
         Transparency = FindProperty("_Transparency", props, false);
 
         RimColor = FindProperty("_RimColor", props, false);
@@ -167,6 +166,8 @@ public class CasToonGUIV2 : ShaderGUI
         ShadowRamp = FindProperty("_ShadowRamp", props, false);
         ShadowColor = FindProperty("_ShadowColor", props, false);
         ShadowOffset = FindProperty("_ShadowOffset", props, false);
+        ShadMaskMap = FindProperty("_ShadMaskMap", props, false);
+        ShadowMaskStrength = FindProperty("_ShadowMaskStrength", props, false);
 
         MatCap = FindProperty("_MatCap", props, false);
         MatMultiply = FindProperty("_MatMultiply", props, false);
@@ -175,11 +176,11 @@ public class CasToonGUIV2 : ShaderGUI
         
         Metallic = FindProperty("_Metallic", props, false);
         RefSmoothness = FindProperty("_RefSmoothness", props, false);
-        invertSmooth = FindProperty("_invertSmooth", props, false);
+        metallicSpecIntensity = FindProperty("_metallicSpecIntensity", props, false);
+        metallicSpecSize = FindProperty("_metallicSpecSize", props, false);
         SmoothnessMaskMap = FindProperty("_SmoothnessMaskMap", props, false);
         MetalMaskMap = FindProperty("_MetalMaskMap", props, false);
         fallbackColor = FindProperty("_fallbackColor", props, false);
-        customcubemap = FindProperty("_customcubemap", props, false);
         CustomReflection = FindProperty("_CustomReflection", props, false);
         MultiplyReflection = FindProperty("_MultiplyReflection", props, false);
         AddReflection = FindProperty("_AddReflection", props, false);
@@ -190,6 +191,8 @@ public class CasToonGUIV2 : ShaderGUI
         SpecMaskMap = FindProperty("_SpecMaskMap", props, false);
         
         OutlineColor = FindProperty("_OutlineColor", props, false);
+        OutlineSize = FindProperty("_outlineSize", props, false);
+        OutlineMask = FindProperty("_OutlineMask", props, false);
 
         EmisTex = FindProperty("_EmisTex", props, false);
         EmisColor = FindProperty("_EmisColor", props, false);
@@ -262,9 +265,10 @@ public class CasToonGUIV2 : ShaderGUI
         return visible;
     }
 
+    public static Material mat;
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
     {
-        Material mat = materialEditor.target as Material;
+        mat = materialEditor.target as Material;
         editor = materialEditor;
         EditorGUIUtility.fieldWidth = 0;
         GetProperties(properties);
@@ -351,18 +355,18 @@ public class CasToonGUIV2 : ShaderGUI
         EditorGUI.EndDisabledGroup();
         EditorGUILayout.Space(10);
         
-        // FoldoutToggle(ref outlinetog,ref outlinetogdis, outlinetogprop, "Outline Settings");
-        // EditorGUI.BeginDisabledGroup(!outlinetogdis);
-        // if(outlinetog)
-        // {
-        //     EditorGUI.indentLevel++;
-        //     EditorGUI.indentLevel++;
-        //     OutlineGroup(mat);
-        //     EditorGUI.indentLevel--;
-        //     EditorGUI.indentLevel--;
-        // }
-        // EditorGUI.EndDisabledGroup();
-        // EditorGUILayout.Space(10);
+        FoldoutToggle(ref outlinetog,ref outlinetogdis, outlinetogprop, "Outline Settings");
+        EditorGUI.BeginDisabledGroup(!outlinetogdis);
+        if(outlinetog)
+        {
+            EditorGUI.indentLevel++;
+            EditorGUI.indentLevel++;
+            OutlineGroup(mat);
+            EditorGUI.indentLevel--;
+            EditorGUI.indentLevel--;
+        }
+        EditorGUI.EndDisabledGroup();
+        EditorGUILayout.Space(10);
         
         FoldoutToggle(ref emistog,ref emistogdis, emistogprop, "Emission Settings");
         EditorGUI.BeginDisabledGroup(!emistogdis);
@@ -434,18 +438,18 @@ public class CasToonGUIV2 : ShaderGUI
     private void ShadowGroup(Material mat)
     {
         GUILayout.Label("Shadow Settings", EditorStyles.boldLabel);
-        editor.TexturePropertySingleLine(Styles.shadowLabel, ShadowRamp, ShadowColor);
-        //gradient = EditorGUILayout.GradientField(gradient);
-        //Texture2D tex = GradientTexGen.Create(gradient);
-        //if (tex != null)
-       // {
-       //     AssetDatabase.CreateAsset(tex, Application.dataPath + "/ShadowRamps/" + mat.name.Replace(" ", "") + ".png");
-       //     AssetDatabase.SaveAssets();
-       //     mat.SetTexture("_ShadowRamp", tex);
-       // }
         
+        if (GUILayout.Button("Open Gradient Editor"))
+        {
+            EditorWindow.GetWindow(typeof(GradientEditor));
+            changedGradient = true;
+        }
+        
+        editor.TexturePropertySingleLine(Styles.shadowLabel, ShadowRamp, ShadowColor);
+
         editor.RangeProperty(ShadowOffset, "Shadow Offset");
         editor.TexturePropertySingleLine(Styles.shadowMaskLabel, ShadMaskMap);
+        editor.ShaderProperty(ShadowMaskStrength, "Shadow Mask Strength");
     }
 
 
@@ -483,8 +487,14 @@ public class CasToonGUIV2 : ShaderGUI
             }
         }
         EditorGUILayout.EndHorizontal();
+        
         editor.TexturePropertySingleLine(Styles.smoothnessMap, SmoothnessMaskMap);
         editor.TexturePropertySingleLine(Styles.metalMap, MetalMaskMap);
+        
+        EditorGUILayout.LabelField("Metallic Specular");
+        editor.RangeProperty(metallicSpecIntensity, "Intensity");
+        editor.RangeProperty(metallicSpecSize, "Size");
+        
         EditorGUILayout.BeginHorizontal();
         EditorGUILayout.PrefixLabel("Use Fallback Cubemap");
         if(mat.GetFloat("_customcubemap") == 0){
@@ -518,7 +528,9 @@ public class CasToonGUIV2 : ShaderGUI
     
     private void OutlineGroup(Material mat)
     {
-        editor.ColorProperty(OutlineColor, "Outline Color");
+        editor.ShaderProperty(OutlineColor, "Outline Color");
+        editor.ShaderProperty(OutlineSize, "Outline Size");
+        editor.ShaderProperty(OutlineMask, "Outline Mask");
     }
 
     private void EmisGroup(Material mat)
@@ -605,6 +617,14 @@ public class CasToonGUIV2 : ShaderGUI
         prop.floatValue = dis ? 1f : 0f;
         foldtog = Foldout(foldtog, title);
         GUILayout.EndHorizontal();
+    }
+
+    bool changedGradient = true;
+    public static void SetShadowGradient(string filenameWithExtension)
+    {
+        AssetDatabase.Refresh();
+        Texture texture = (Texture)AssetDatabase.LoadAssetAtPath("Assets/" + filenameWithExtension, typeof(Texture));
+        mat.SetTexture("_ShadowRamp",texture);
     }
     
 }
