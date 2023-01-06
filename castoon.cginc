@@ -1,13 +1,8 @@
-
-
-#define RALIV_ORIFICE;
 #include "UnityStandardBRDF.cginc"
 #include "Lighting.cginc"
 #include "AutoLight.cginc"
 #include "UnityStandardUtils.cginc"
 #include "AudioLink.cginc"
-//#include "RalivDPS_Defines.cginc"
-//#include "RalivDPS_Functions.cginc"
 
 struct appdata
 {
@@ -28,55 +23,67 @@ struct v2f
     float3 tbn[3] : TEXCOORD3; //4&5
 };
 
-
+// Main Options
 sampler2D _MainTex;
 float4 _MainTex_ST;
 float3 _MainColor;
 sampler2D _NormalMap;
 float _NormalStrength;
-sampler2D _ShadMaskMap;
 float _Transparency;
 
+// Shadows
 sampler2D _ShadowRamp;
 float4 _ShadowColor;
 float _ShadowOffset;
+sampler2D _ShadMaskMap;
+float _ShadowMaskStrength;
 
+// Rimlighting
 float4 _RimColor;
 float _RimSize;
 float _RimIntensity;
 sampler2D _RimMaskMap;
 
+// Matcaps
 sampler2D _MatCap;
 float _MatMultiply;
 float _MatAdd;
 sampler2D _MatMaskMap;
 
+// Metallics and Reflection
 float _Metallic;
 float _RefSmoothness;
 float _invertSmooth;
 sampler2D _SmoothnessMaskMap;
 sampler2D _MetalMaskMap;
+float _metallicSpecIntensity;
+float _metallicSpecSize;
 float3 _fallbackColor;
 float _customcubemap;
 samplerCUBE _CustomReflection;
 float _MultiplyReflection;
 float _AddReflection;
 
+// Fake Specular
 float4 _SpeccColor;
 float _SpecSmoothness;
 float _SpeccSize;
 sampler2D _SpecMaskMap;
 
+// Emission
 sampler2D _EmisTex;
 float3 _EmisColor;
 float _EmisPower;
 
+// Lighting
 float _UnlitIntensity;
 float _NormFlatten;
 float _BakedColorContribution;
 
+// Utilities
 sampler2D _HideMeshMap;
 
+// Audio Link
 float _Bass;
 float _LowMid;
 float _HighMid;
@@ -84,6 +91,7 @@ float _Treble;
 float _minAudioBrightness;
 float _audioStrength;
 
+// UI folder disables
 float _rimtog;
 float _mattog;
 float _spectog;
@@ -94,15 +102,14 @@ float _audioLinktog;
 v2f vert (appdata v)
 {
     v2f o;
-    //OrificeReshape(v.vertex, v.normal, v.tangent.xyz, v.vertexId);
     o.vertex = UnityObjectToClipPos(v.vertex);
     if (tex2Dlod(_HideMeshMap, v.uv).x < 0.5)
         o.vertex.w = 0.0 / 0.0;  
     o.uv = TRANSFORM_TEX(v.uv, _MainTex);
     o.normal = UnityObjectToWorldNormal( v.normal );
-    float3 tangent = UnityObjectToWorldNormal(v.tangent);
-    float3 bitangent = cross(tangent, o.normal);
-    o.tbn[0] = tangent;
+    float4 tangent = float4(UnityObjectToWorldDir(v.tangent.xyz), v.tangent.w);
+    float3 bitangent = cross(o.normal,tangent) * tangent.w ;
+    o.tbn[0] = tangent; 
     o.tbn[1] = bitangent;
     o.tbn[2] = o.normal;
     TRANSFER_VERTEX_TO_FRAGMENT(o);
@@ -111,44 +118,69 @@ v2f vert (appdata v)
     return o;
 }
 
+fixed3 DecodeLightProbe( fixed3 N ){
+    return ShadeSH9(float4(N,1));
+}
+
 float remap( float value, float low1, float high1, float low2, float high2)
 {
     return low2 + (value - low1) * (high2 - low2) / (high1 - low1);
 }
 
+float remapf3( float3 value, float3 low1, float3 high1, float3 low2, float3 high2)
+{
+    return float3(
+        low2.x + (value.x - low1.x) * (high2.x - low2.x) / (high1.x - low1.x),
+        low2.y + (value.y - low1.y) * (high2.y - low2.y) / (high1.y - low1.y),
+        low2.z + (value.z - low1.z) * (high2.z - low2.z) / (high1.z - low1.z)
+    );
+}
+
+float generic_desaturate(float3 color, float factor)
+{
+    float3 lum = float3(0.299, 0.587, 0.114);
+    float gray = dot(lum, color);
+    return lerp(color, gray, factor);
+}
+
+
 fixed4 frag (v2f i) : SV_Target
 {
     float avgDirIntensity = (_LightColor0.r + _LightColor0.g + _LightColor0.b)/3.0;
-    float3 L = _WorldSpaceLightPos0.xyz;
+    float4 L = normalize(_WorldSpaceLightPos0);
     
     if (avgDirIntensity < 0.05f)
     {
-        L = normalize(float3(-1,1,1));
+        L.xyz = normalize(float3(-1,1,1));
     }
 
-    L = lerp(L, normalize(float3(0,L.y,0)), 1-_NormFlatten);
+    
+    L.xyz = lerp(L, normalize(float3(L.x,0,L.z)), _NormFlatten);
     
     float3 V = normalize(_WorldSpaceCameraPos - i.wPos);
     float3 worldViewDir = normalize(UnityWorldSpaceViewDir(i.wPos));
-    fixed3 norm = UnpackNormalWithScale(tex2D(_NormalMap, i.uv), _NormalStrength);
-    float3 worldNormal = normalize(float3(i.tbn[0] * norm.r + i.tbn[1] * norm.g + i.tbn[2])* norm.b);
+    
+    float3 norm = UnpackScaleNormal(tex2D(_NormalMap, i.uv), _NormalStrength);
+    float3 worldNormal = (i.tbn[0] * norm.r + i.tbn[1] * norm.g + i.tbn[2]* norm.b);
+    
     float3 R = reflect(-L, worldNormal);
     float3 VRef = normalize(reflect(-worldViewDir, worldNormal));
 
-    float shade = 0.5 * dot(worldNormal, L) + 0.5;
+    float shade = clamp(0, 1, 0.5 * dot(worldNormal, L) + 0.5);
     shade = clamp(0,1,tex2D(_ShadowRamp, shade.xx) + (1-_ShadowColor.w));
 
     // sample the texture
     float4 maincol = tex2D(_MainTex, i.uv);
     float3 col = saturate(maincol.xyz * _MainColor);
     float3 mainOut = lerp(col * _ShadowColor.xyz, col, shade);
-    mainOut = lerp(col, mainOut, tex2D(_ShadMaskMap, i.uv).xyz);
-    
+    mainOut = lerp(col, mainOut, tex2D(_ShadMaskMap, i.uv).xxx);
     
     //Rimlight
     if (_rimtog == 1)
     {
-        float3 rimLight = smoothstep(0.6, 1.0, saturate(1 - dot(worldNormal, V) * _RimSize) * _RimIntensity);
+        float dotprod = dot(worldNormal, V);
+        dotprod = saturate(abs(dotprod) * _RimSize);
+        float3 rimLight = saturate(smoothstep(0.6, 1.0, 1- dotprod) * _RimIntensity);
         rimLight *= tex2D(_RimMaskMap, i.uv).xyz;
         rimLight = lerp(mainOut, _RimColor.xyz, rimLight);
         mainOut = lerp(mainOut, rimLight, _RimColor.w);
@@ -165,33 +197,49 @@ fixed4 frag (v2f i) : SV_Target
         mainOut = lerp(mainOut * matcap.xyz, mainOut, 1 - _MatMultiply);
         mainOut = lerp(mainOut + matcap.xyz, mainOut, 1 - _MatAdd);
      }
+
     
     //Metal
     if (_metaltog == 1)
     {
-        float roughness = 1-_RefSmoothness;
-        roughness *= (1.7 - 0.7) * roughness;
+        float roughness = _RefSmoothness;
+        float baseRoughness = roughness;
         
-        if (_invertSmooth == 0) { roughness = 1 - _RefSmoothness * tex2D(_SmoothnessMaskMap, i.uv);}
-        else { roughness = _RefSmoothness * tex2D(_SmoothnessMaskMap, i.uv);}
+        if (_invertSmooth == 0)
+        {
+            roughness = 1 - (roughness * (1 - tex2D(_SmoothnessMaskMap, i.uv)));
+            baseRoughness = 1 - baseRoughness;
+        }
+        else { roughness = roughness * tex2D(_SmoothnessMaskMap, i.uv);}
         
-        float3 skyColorFallback;
-        half4 skyData = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, VRef, roughness * UNITY_SPECCUBE_LOD_STEPS);
-        float3 skyColor = saturate(DecodeHDR(skyData, unity_SpecCube0_HDR)) * _fallbackColor;
+        float3 color0 = BoxProjectedCubemapDirection(R, i.vertex, unity_SpecCube0_ProbePosition, unity_SpecCube0_BoxMin, unity_SpecCube0_BoxMax);
+        float3 color1 = BoxProjectedCubemapDirection(R, i.vertex, unity_SpecCube1_ProbePosition, unity_SpecCube1_BoxMin, unity_SpecCube1_BoxMax);
+
+        float4 col0 = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, VRef, roughness * 10);
+        float4 col1 = UNITY_SAMPLE_TEXCUBE_SAMPLER_LOD(unity_SpecCube1, unity_SpecCube0, VRef, roughness * 10);
+
+        color0.rgb = DecodeHDR(col0, unity_SpecCube0_HDR);
+        color1.rgb = DecodeHDR(col1, unity_SpecCube1_HDR);
+
+        float3 reflection = lerp(color1, color0, unity_SpecCube0_BoxMin.w);
+        
+        float3 reflectionFallback;
         if (_customcubemap == 1)
         {
-            skyData = texCUBElod(_CustomReflection, float4(VRef,roughness * UNITY_SPECCUBE_LOD_STEPS*2));
-            skyColorFallback = saturate(DecodeHDR(skyData, unity_SpecCube0_HDR)) * _fallbackColor;
+            half4 skyData = texCUBElod(_CustomReflection, float4(VRef,baseRoughness * 10));
+            reflectionFallback = saturate(DecodeHDR(skyData, unity_SpecCube0_HDR)) * _fallbackColor;
 
-            skyColor = lerp(skyColor, skyColor * skyColorFallback, _MultiplyReflection);
-            skyColor = lerp(skyColor, skyColor + skyColorFallback, _AddReflection);
+            reflection = lerp(reflection, reflection * reflectionFallback, _MultiplyReflection);
+            reflection = lerp(reflection, reflection + reflectionFallback, _AddReflection);
         }
 
-        roughness     = (1 - _RefSmoothness) * (1 - _RefSmoothness);
-        float3 metallicSpec = max(0, GGXTerm(max(0, dot( worldNormal, normalize(worldViewDir + L))), roughness*2)) * col;
+        roughness = saturate(1-lerp (roughness,(1 - _RefSmoothness) * (1 - _RefSmoothness), 1));
+        if (_invertSmooth == 0) roughness = 1 - roughness;
+        
+        float3 metallicSpec = max(0.01, GGXTerm(max(0, dot( worldNormal, normalize(worldViewDir + L ))), roughness * _metallicSpecSize))*col;
 
-        mainOut = lerp(mainOut, mainOut + metallicSpec, 0.5);
-        mainOut = lerp(mainOut, mainOut * skyColor, _Metallic * tex2D(_MetalMaskMap, i.uv).xyz);
+        mainOut = lerp(mainOut, mainOut + metallicSpec, _metallicSpecIntensity);
+        mainOut = lerp(mainOut, mainOut * reflection, _Metallic * tex2D(_MetalMaskMap, i.uv).xyz);
     } 
     
     //Specular | http://www.conitec.net/shaders/shader_work3.htm (general approach)
@@ -202,10 +250,11 @@ fixed4 frag (v2f i) : SV_Target
         spec *= tex2D(_SpecMaskMap, i.uv).xyz;
         mainOut = lerp(mainOut + (spec * _SpeccColor.xyz), mainOut, 1 - _SpeccColor.w);
     }
+
     
     //Lighting Options
-    float3 bakedLight = saturate(ShadeSHPerPixel(lerp(float3(0.33,0.33,0.33),i.normal,0.5), _LightColor0, i.wPos ));
-    bakedLight = lerp(((bakedLight.x + bakedLight.y + bakedLight.z) / 3).xxx, bakedLight, _BakedColorContribution);
+    float3 bakedLight = saturate(ShadeSHPerPixel(L.xyz,_LightColor0, i.vertex.xyz ));
+    bakedLight = lerp(generic_desaturate(bakedLight, 1), bakedLight, _BakedColorContribution);
     float3 finalOut = saturate(lerp( mainOut * bakedLight, mainOut, _UnlitIntensity));
     
     //Emission
@@ -238,6 +287,8 @@ fixed4 frag (v2f i) : SV_Target
         return float4(finalOut, maincol.w * _Transparency);
     #endif
 
+    
     return float4(finalOut, 1);
 
 }
+
