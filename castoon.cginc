@@ -1,13 +1,8 @@
-
-
-#define RALIV_ORIFICE;
 #include "UnityStandardBRDF.cginc"
 #include "Lighting.cginc"
 #include "AutoLight.cginc"
 #include "UnityStandardUtils.cginc"
 #include "AudioLink.cginc"
-//#include "RalivDPS_Defines.cginc"
-//#include "RalivDPS_Functions.cginc"
 
 struct appdata
 {
@@ -42,7 +37,6 @@ float4 _ShadowColor;
 float _ShadowOffset;
 sampler2D _ShadMaskMap;
 float _ShadowMaskStrength;
-
 
 // Rimlighting
 float4 _RimColor;
@@ -104,12 +98,10 @@ float _spectog;
 float _metaltog;
 float _emistog;
 float _audioLinktog;
-float _orificetog;
 
 v2f vert (appdata v)
 {
     v2f o;
-    //OrificeReshape(v.vertex, v.normal, v.tangent.xyz, v.vertexId);
     o.vertex = UnityObjectToClipPos(v.vertex);
     if (tex2Dlod(_HideMeshMap, v.uv).x < 0.5)
         o.vertex.w = 0.0 / 0.0;  
@@ -126,21 +118,43 @@ v2f vert (appdata v)
     return o;
 }
 
+fixed3 DecodeLightProbe( fixed3 N ){
+    return ShadeSH9(float4(N,1));
+}
+
 float remap( float value, float low1, float high1, float low2, float high2)
 {
     return low2 + (value - low1) * (high2 - low2) / (high1 - low1);
 }
 
+float remapf3( float3 value, float3 low1, float3 high1, float3 low2, float3 high2)
+{
+    return float3(
+        low2.x + (value.x - low1.x) * (high2.x - low2.x) / (high1.x - low1.x),
+        low2.y + (value.y - low1.y) * (high2.y - low2.y) / (high1.y - low1.y),
+        low2.z + (value.z - low1.z) * (high2.z - low2.z) / (high1.z - low1.z)
+    );
+}
+
+float generic_desaturate(float3 color, float factor)
+{
+    float3 lum = float3(0.299, 0.587, 0.114);
+    float gray = dot(lum, color);
+    return lerp(color, gray, factor);
+}
+
+
 fixed4 frag (v2f i) : SV_Target
 {
     float avgDirIntensity = (_LightColor0.r + _LightColor0.g + _LightColor0.b)/3.0;
-    float4 L = _WorldSpaceLightPos0;
+    float4 L = normalize(_WorldSpaceLightPos0);
     
     if (avgDirIntensity < 0.05f)
     {
         L.xyz = normalize(float3(-1,1,1));
     }
 
+    
     L.xyz = lerp(L, normalize(float3(L.x,0,L.z)), _NormFlatten);
     
     float3 V = normalize(_WorldSpaceCameraPos - i.wPos);
@@ -236,10 +250,11 @@ fixed4 frag (v2f i) : SV_Target
         spec *= tex2D(_SpecMaskMap, i.uv).xyz;
         mainOut = lerp(mainOut + (spec * _SpeccColor.xyz), mainOut, 1 - _SpeccColor.w);
     }
+
     
     //Lighting Options
-    float3 bakedLight = saturate(ShadeSHPerPixel(half3(0,0,0),_LightColor0, i.vertex.xyz ));
-    bakedLight = lerp(((bakedLight.x + bakedLight.y + bakedLight.z) / 3).xxx, bakedLight, _BakedColorContribution);
+    float3 bakedLight = saturate(ShadeSHPerPixel(L.xyz,_LightColor0, i.vertex.xyz ));
+    bakedLight = lerp(generic_desaturate(bakedLight, 1), bakedLight, _BakedColorContribution);
     float3 finalOut = saturate(lerp( mainOut * bakedLight, mainOut, _UnlitIntensity));
     
     //Emission
@@ -276,3 +291,4 @@ fixed4 frag (v2f i) : SV_Target
     return float4(finalOut, 1);
 
 }
+

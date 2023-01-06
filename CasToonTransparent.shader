@@ -74,25 +74,23 @@
         _emistog("toggle emissison", Float) = 0
         _emistogscroll("toggle emissison", Float) = 0
         _audioLinktog("toggle AudioLink", Float) = 0
-        _orificetog("toggle Orifice", Float) = 0
     }
     SubShader
     {
-	    Tags { "Queue"="AlphaTest" "RenderType"="Transparent"
+	    Tags { "Queue"="Transparent" "RenderType"="Transparent"
         "LightMode" = "ForwardBase" "VRCFallback" = "ToonFade"}
     	
     	ZWrite On
     	ZTest LEqual
-    	ZClip false
     	
-    	BlendOp Add, Max
+	    BlendOp Add, Max
         Blend SrcAlpha OneMinusSrcAlpha, One One
     	
     	
         LOD 100 
         Cull [_CullingMode]
         
-        Pass
+	    Pass
         {
             CGPROGRAM
             #pragma vertex vert
@@ -103,7 +101,7 @@
 
             #define _IS_TRANSPARENT 1
 
-			#include  "castoon.cginc"
+			#include  "CasToon.cginc"
             
             ENDCG
         }
@@ -158,45 +156,59 @@
             // And it's additive to the base pass.
             Blend OneMinusDstColor One
             CGPROGRAM
-                #pragma vertex vert
-                #pragma fragment frag
-                #pragma multi_compile_fwdadd
-               
-                #include "UnityCG.cginc"
-                #include "AutoLight.cginc"
- 
-                float4 _MainTex_ST;
- 
-                struct v2f {
-                    float4  pos         : SV_POSITION;
-                    float2  uv          : TEXCOORD0;
-                    float3  normal      : TEXCOORD1;
-                    float3  lightDir    : TEXCOORD2;
-                    LIGHTING_COORDS(3,4)
-                };
- 
-                v2f vert (appdata_base v)
-                {
-                    v2f o;
-                    o.pos = UnityObjectToClipPos (v.vertex);
-                    o.uv = TRANSFORM_TEX (v.texcoord, _MainTex).xy;
-                    o.normal = v.normal.xyz;
-                    o.lightDir = ObjSpaceLightDir (v.vertex).xyz;
-                    TRANSFER_VERTEX_TO_FRAGMENT(o);
-                    return o;
-                }
- 
-                sampler2D _MainTex;
-                fixed4 _LightColor0;
- 
-                fixed4 frag(v2f i) : COLOR
-                {
-                    fixed atten = LIGHT_ATTENUATION(i);
-                    fixed4 c;
-                    c.rgb = saturate(dot(i.normal, i.lightDir)) * atten * 2 * _LightColor0.rgb * tex2D(_MainTex, i.uv).rgb;
-                    c.a = 1.0;
-                    return c;
-                }
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_fwdadd
+           
+            #include "UnityCG.cginc"
+            #include "AutoLight.cginc"
+			#include "Lighting.cginc"
+			#include "UnityStandardUtils.cginc"
+
+            float4 _MainTex_ST;
+
+            struct v2f {
+                float4  pos         : SV_POSITION;
+                float2  uv          : TEXCOORD0;
+                float3  normal      : TEXCOORD1;
+                float3  lightDir    : TEXCOORD2;
+                LIGHTING_COORDS(3,4)
+            	float3 tbn[3] : TEXCOORD4; //5&6
+            };
+
+            v2f vert (appdata_full v)
+            {
+                v2f o;
+                o.pos = UnityObjectToClipPos (v.vertex);
+                o.uv = TRANSFORM_TEX (v.texcoord, _MainTex).xy;
+                o.normal = v.normal.xyz;
+            	float4 tangent = float4(UnityObjectToWorldDir(v.tangent.xyz), v.tangent.w);
+				float3 bitangent = cross(o.normal,tangent) * tangent.w ;
+				o.tbn[0] = tangent; 
+				o.tbn[1] = bitangent;
+				o.tbn[2] = o.normal;
+                o.lightDir = ObjSpaceLightDir (v.vertex).xyz;
+                TRANSFER_VERTEX_TO_FRAGMENT(o);
+                return o;
+            }
+
+            sampler2D _MainTex;
+            sampler2D _NormalMap;
+            sampler2D _ShadowRamp;
+            float _NormalStrength;
+            float4 _ShadowColor;
+
+            fixed4 frag(v2f i) : COLOR
+            {
+			    float4 L = normalize(_WorldSpaceLightPos0);
+                fixed atten = LIGHT_ATTENUATION(i);
+                float3 norm = UnpackScaleNormal(tex2D(_NormalMap, i.uv), _NormalStrength);
+				float3 worldNormal = (i.tbn[0] * norm.r + i.tbn[1] * norm.g + i.tbn[2]* norm.b);
+            	float shade = clamp(0, 1, 0.5 * dot(worldNormal, L) + 0.5);
+				shade = clamp(0,1,tex2D(_ShadowRamp, shade.xx) + (1-_ShadowColor.w));
+                float3 color = shade * atten * 2 * _LightColor0.rgb * tex2D(_MainTex, i.uv).rgb;
+                return float4(color,1);
+            }
             ENDCG
 		}
     }
