@@ -6,12 +6,12 @@
 
 ## [DOWNLOAD](https://github.com/CascadianWorks/CasToon/releases)
 
-## Properties List
+## FEATURES
 - Color & Normal Maps 
   - Color Map
   - Normal Map w/ Strength
 - Shadows Settings
-  - Gradient Texture
+  - Gradient Texture w/ Gradient Editor
   - Color
   - Offset
 - Rimlight Settings
@@ -37,7 +37,8 @@
 - Emission Settings
   - Mask
   - Color
-  - Power
+  - Strength
+    - Scrolling
     - Audiolink
 - Lighting Settings
   - Unlit Intensity
