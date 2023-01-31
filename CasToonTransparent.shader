@@ -5,9 +5,11 @@
     {
         _MainTex ("Color Map", 2D) = "white" {}
         _MainColor ("Main Color", Color) = (1,1,1,1) 
+    	_Transparency("Transparency", Range(0,1)) = 1
         [Normal] [NoScale] _NormalMap("Normal Map", 2D) = "bump" {}
         _NormalStrength("Normal Strength", Range(0,2)) = 1
-        _Transparency("Transparency", Range(0,1)) = 1
+    	[Normal] _DetailNormalMap("Detail Normal Map", 2D) = "bump" {}
+        _DetailNormalStrength("Detail Normal Strength", Range(0,2)) = 1
 
         _ShadowRamp("Shadow Ramp", 2D) = "white" {}        
         _ShadowColor("Shadow Color", Color) = (0.5,0.5,0.5,1)
@@ -50,11 +52,13 @@
         _EmisTex("Emission Map", 2D) = "white" {}
         _EmisColor("Emission Color", Color) = (1,1,1,1)
         _EmisPower("Emission Power", Float) = 1
-
-        _UnlitIntensity("Unlit Intensity", Range(0,1)) = 0.1
-        _NormFlatten("Normal Flatten", Range(0,1)) = 0.5
-    	_BakedColorContribution("Baked Color Contribution", Range(0,1)) = 1.0
-    	
+    	// Emission Scroll
+		_EmisScrollSpeed("Emission Scroll Frequency", Float) = 1
+		_EmisScrollFrequency("Emission Scroll Frequency", Float) = 1
+    	_EmisScrollMinBrightness("Emission Scroll Min Brightness", Float) = 0
+    	_EmisScrollMaxBrightness("Emission Scroll Max Brightness", Float) = 1
+    	_EmisScrollSpace("Emission Scroll Transform Space", Float) = 0
+    	// Audio Link
     	_AudioLink ("AudioLink Texture", 2D) = "black" {}
     	_Bass ("Bass", Range(0,1)) = 0
     	_LowMid ("LowMid", Range(0,1)) = 0
@@ -62,9 +66,16 @@
     	_Treble ("Treble", Range(0,1)) = 0
     	_minAudioBrightness ("Minimum Brightness", Range(0,1)) = 0.5
     	_audioStrength ("Audio Strength", Range(0,5)) = 1
+    	
+        _UnlitIntensity("Unlit Intensity", Range(0,1)) = 0.1
+        _NormFlatten("Normal Flatten", Range(0,1)) = 0.5
+    	_BakedColorContribution("Baked Color Contribution", Range(0,1)) = 1.0
         
-    	_HideMeshMap("Hide Mesh Map", 2D) = "white" {}
+        _HideMeshMap("Hide Mesh Map", 2D) = "white" {}
     	[Enum(OFF,0,FRONT,1,BACK,2)] _CullingMode("Culling Mode", int) = 2
+    	[IntRange] _StencilRef ("Stencil Reference Value", Range(0, 255)) = 0
+    	[Enum(UnityEngine.Rendering.CompareFunction)] _StencilFunction("Stencil Compare Function", Float) = 8
+        [Enum(UnityEngine.Rendering.StencilOp)] _StencilOp("Stencil Operation", Float) = 0
     	
     	_rimtog("toggle rimlight", Float) = 0
         _mattog("toggle matcap", Float) = 0
@@ -86,8 +97,16 @@
 	    BlendOp Add, Max
         Blend SrcAlpha OneMinusSrcAlpha, One One
     	
+    	Stencil
+		{
+			Ref [_StencilRef]
+			Comp [_StencilFunction]
+			Pass [_StencilOp]
+			Fail [_StencilOp]
+			ZFail [_StencilOp]
+		}
     	
-        LOD 100 
+	    LOD 100 
         Cull [_CullingMode]
         
 	    Pass

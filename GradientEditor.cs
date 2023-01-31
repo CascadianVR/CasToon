@@ -25,7 +25,7 @@ namespace CasToon.CasToon
 
             GUILayout.FlexibleSpace();
 
-            if (GUILayout.Button("Convert to asset", GUILayout.Height(50)))
+            if (GUILayout.Button("Save Shadow Ramp", GUILayout.Height(50)))
             {
                 ConvertGradient();
                 CasToonGUIV2.SetShadowGradient(filenameWithExtension);
