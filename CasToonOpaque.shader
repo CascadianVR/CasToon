@@ -9,6 +9,8 @@ Shader".Cascadian/CasToonOpaque"
         _MainColor ("Main Color", Color) = (1,1,1,1) 
         [Normal] [NoScale] _NormalMap("Normal Map", 2D) = "bump" {}
         _NormalStrength("Normal Strength", Range(0,2)) = 1
+    	[Normal] _DetailNormalMap("Detail Normal Map", 2D) = "bump" {}
+        _DetailNormalStrength("Detail Normal Strength", Range(0,2)) = 1
 
         _ShadowRamp("Shadow Ramp", 2D) = "white" {}        
         _ShadowColor("Shadow Color", Color) = (0.5,0.5,0.5,1)
@@ -51,11 +53,13 @@ Shader".Cascadian/CasToonOpaque"
         _EmisTex("Emission Map", 2D) = "white" {}
         _EmisColor("Emission Color", Color) = (1,1,1,1)
         _EmisPower("Emission Power", Float) = 1
-
-        _UnlitIntensity("Unlit Intensity", Range(0,1)) = 0.1
-        _NormFlatten("Normal Flatten", Range(0,1)) = 0.5
-        _BakedColorContribution("Baked Color Contribution", Range(0,1)) = 1.0
-    	
+    	// Emission Scroll
+    	_EmisScrollSpeed("Emission Scroll Frequency", Float) = 1
+    	_EmisScrollFrequency("Emission Scroll Frequency", Float) = 5
+    	_EmisScrollMinBrightness("Emission Scroll Min Brightness", Float) = 0
+    	_EmisScrollMaxBrightness("Emission Scroll Max Brightness", Float) = 1
+    	_EmisScrollSpace("Emission Scroll Transform Space", Float) = 0
+    	// Audio Link
     	_AudioLink ("AudioLink Texture", 2D) = "black" {}
     	_Bass ("Bass", Range(0,1)) = 0
     	_LowMid ("LowMid", Range(0,1)) = 0
@@ -63,22 +67,19 @@ Shader".Cascadian/CasToonOpaque"
     	_Treble ("Treble", Range(0,1)) = 0
     	_minAudioBrightness ("Minimum Brightness", Range(0,1)) = 0.5
     	_audioStrength ("Audio Strength", Range(0,5)) = 1
+
+        _UnlitIntensity("Unlit Intensity", Range(0,1)) = 0.1
+        _NormFlatten("Normal Flatten", Range(0,1)) = 0.5
+        _BakedColorContribution("Baked Color Contribution", Range(0,1)) = 1.0
     	
-    	// Utilities
+        // Utilities
     	_HideMeshMap("Hide Mesh Map", 2D) = "white" {}
     	[Enum(OFF,0,FRONT,1,BACK,2)] _CullingMode("Culling Mode", int) = 2
-    	
-        _OrificeData("OrificeData", 2D) = "white" {}
-		_EntryOpenDuration("Entry Trigger Duration", Range( 0 , 1)) = 0.1
-		_Shape1Depth("Shape 1 Trigger Depth", Range( 0 , 5)) = 0.1
-		_Shape1Duration("Shape 1 Trigger Duration", Range( 0 , 1)) = 0.1
-		_Shape2Depth("Shape 2 Trigger Depth", Range( 0 , 5)) = 0.2
-		_Shape2Duration("Shape 2 Trigger Duration", Range( 0 , 1)) = 0.1
-		_Shape3Depth("Shape 3 Trigger Depth", Range( 0 , 5)) = 0.3
-		_Shape3Duration("Shape 3 Trigger Duration", Range( 0 , 1)) = 0.1
-		_BlendshapePower("Blend Shape Power", Range(0,5)) = 1
-		_BlendshapeBadScaleFix("Blend Shape Bad Scale Fix", Range(1,100)) = 1
+        [IntRange] _StencilRef ("Stencil Reference Value", Range(0, 255)) = 0
+    	[Enum(UnityEngine.Rendering.CompareFunction)] _StencilFunction("Stencil Compare Function", Float) = 8
+        [Enum(UnityEngine.Rendering.StencilOp)] _StencilOp("Stencil Operation", Float) = 0
         
+    	// Toggle Groups
     	_rimtog("toggle rimlight", Float) = 0
         _mattog("toggle matcap", Float) = 0
         _spectog("toggle specular", Float) = 0
@@ -87,10 +88,17 @@ Shader".Cascadian/CasToonOpaque"
         _emistog("toggle emissison", Float) = 0
         _emistogscroll("toggle emissison", Float) = 0
         _audioLinktog("toggle AudioLink", Float) = 0
-        _orificetog("toggle Orifice", Float) = 0
     }
     SubShader
     {
+    	Stencil
+		{
+			Ref [_StencilRef]
+			Comp [_StencilFunction]
+			Pass [_StencilOp]
+			Fail [_StencilOp]
+			ZFail [_StencilOp]
+		}
     	
 	    Pass // Main
         {
@@ -98,6 +106,7 @@ Shader".Cascadian/CasToonOpaque"
 	        "LightMode" = "ForwardBase" "VRCFallback"="Toon"}
 	        LOD 100
 	        Cull [_CullingMode]
+
         	
             CGPROGRAM
             #pragma vertex vert

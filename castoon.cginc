@@ -21,15 +21,19 @@ struct v2f
     float3 normal : TEXCOORD1;
     float3 wPos : TEXCOORD2;
     float3 tbn[3] : TEXCOORD3; //4&5
+    float3 oPos : TEXCOORD6;
 };
 
 // Main Options
 sampler2D _MainTex;
 float4 _MainTex_ST;
 float3 _MainColor;
+float _Transparency;
 sampler2D _NormalMap;
 float _NormalStrength;
-float _Transparency;
+sampler2D _DetailNormalMap;
+float4 _DetailNormalMap_ST;
+float _DetailNormalStrength;
 
 // Shadows
 sampler2D _ShadowRamp;
@@ -74,6 +78,19 @@ sampler2D _SpecMaskMap;
 sampler2D _EmisTex;
 float3 _EmisColor;
 float _EmisPower;
+// Emission Scroll
+float _EmisScrollSpeed;
+float _EmisScrollFrequency;
+float _EmisScrollMinBrightness;
+float _EmisScrollMaxBrightness;
+float _EmisScrollSpace;
+// Audio Link
+float _Bass;
+float _LowMid;
+float _HighMid;
+float _Treble;
+float _minAudioBrightness;
+float _audioStrength;
 
 // Lighting
 float _UnlitIntensity;
@@ -83,26 +100,20 @@ float _BakedColorContribution;
 // Utilities
 sampler2D _HideMeshMap;
 
-// Audio Link
-float _Bass;
-float _LowMid;
-float _HighMid;
-float _Treble;
-float _minAudioBrightness;
-float _audioStrength;
-
 // UI folder disables
 float _rimtog;
 float _mattog;
 float _spectog;
 float _metaltog;
 float _emistog;
+float _emistogscroll;
 float _audioLinktog;
 
 v2f vert (appdata v)
 {
     v2f o;
     o.vertex = UnityObjectToClipPos(v.vertex);
+    o.oPos = v.vertex;
     if (tex2Dlod(_HideMeshMap, v.uv).x < 0.5)
         o.vertex.w = 0.0 / 0.0;  
     o.uv = TRANSFORM_TEX(v.uv, _MainTex);
@@ -162,6 +173,11 @@ fixed4 frag (v2f i) : SV_Target
     
     float3 norm = UnpackScaleNormal(tex2D(_NormalMap, i.uv), _NormalStrength);
     float3 worldNormal = (i.tbn[0] * norm.r + i.tbn[1] * norm.g + i.tbn[2]* norm.b);
+
+    float3 detailNorm = UnpackScaleNormal(tex2D(_DetailNormalMap, i.uv * _DetailNormalMap_ST.xy + _DetailNormalMap_ST.zw), _DetailNormalStrength);
+    float3 detailWorldNormal = (i.tbn[0] * detailNorm.r + i.tbn[1] * detailNorm.g + i.tbn[2]* detailNorm.b);
+
+    worldNormal = BlendNormals(worldNormal, detailWorldNormal);
     
     float3 R = reflect(-L, worldNormal);
     float3 VRef = normalize(reflect(-worldViewDir, worldNormal));
@@ -250,7 +266,6 @@ fixed4 frag (v2f i) : SV_Target
         spec *= tex2D(_SpecMaskMap, i.uv).xyz;
         mainOut = lerp(mainOut + (spec * _SpeccColor.xyz), mainOut, 1 - _SpeccColor.w);
     }
-
     
     //Lighting Options
     float3 bakedLight = saturate(ShadeSHPerPixel(L.xyz,_LightColor0, i.vertex.xyz ));
@@ -260,6 +275,17 @@ fixed4 frag (v2f i) : SV_Target
     //Emission
     if (_emistog == 1)
     {
+        float emisStrength = 0;
+        if (_emistogscroll == 1)
+        {
+            if (_EmisScrollSpace == 1)
+                emisStrength = (sin(_Time.y * _EmisScrollSpeed + i.wPos.y * _EmisScrollFrequency) + 1)/2;
+            else
+                emisStrength = (sin(_Time.y * _EmisScrollSpeed + i.oPos.y * _EmisScrollFrequency) + 1)/2;
+            
+            emisStrength = remap(emisStrength,0,1,_EmisScrollMinBrightness,_EmisScrollMaxBrightness);
+        }
+
         if (_audioLinktog == 1)
         {
             float4 audioLink;
@@ -267,20 +293,16 @@ fixed4 frag (v2f i) : SV_Target
             audioLink.y = AudioLinkLerp( ALPASS_AUDIOLINK + int2( 0 , i.uv.y) + 1).yyyy;
             audioLink.z = AudioLinkLerp( ALPASS_AUDIOLINK + int2( 0 , i.uv.y) + 2).yyyy;
             audioLink.w = AudioLinkLerp( ALPASS_AUDIOLINK + int2( 0 , i.uv.y) + 3).yyyy;
-
-            float emisStrength = 0;
+            
             emisStrength += lerp(0,audioLink.x, _Bass);
             emisStrength += lerp(0,audioLink.y, _LowMid);
             emisStrength += lerp(0,audioLink.z, _HighMid);
             emisStrength += lerp(0,audioLink.w, _Treble);
             
             emisStrength = remap(emisStrength, 0, 1, _minAudioBrightness, 1) * _audioStrength;
-            finalOut = lerp(finalOut, mainOut * _EmisColor * _EmisPower * emisStrength, tex2D(_EmisTex, i.uv).xyz);
         }
-        else
-        {
-            finalOut = lerp(finalOut, mainOut * _EmisColor * _EmisPower, tex2D(_EmisTex, i.uv).xyz);
-        }
+        
+        finalOut = lerp(finalOut, mainOut * _EmisColor * _EmisPower * emisStrength, tex2D(_EmisTex, i.uv).xyz);
     }
     
     #if _IS_TRANSPARENT
