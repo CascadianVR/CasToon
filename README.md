@@ -4,7 +4,9 @@
  I have no clue what I'm doing so feel free to tell me what's wrong.
 
 
-## [DOWNLOAD](https://github.com/CascadianWorks/CasToon/releases)
+## [DOWNLOAD HERE](https://github.com/CascadianWorks/CasToon/releases)
+
+![image](https://user-images.githubusercontent.com/90723146/216168431-f0e8022b-e8eb-4ee9-bfaf-fdc31f699123.png)
 
 ## FEATURES
 - Color & Normal Maps 
