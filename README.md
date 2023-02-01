@@ -9,7 +9,9 @@
 ## FEATURES
 - Color & Normal Maps 
   - Color Map
+  - Transparency
   - Normal Map w/ Strength
+  - Detail Normal w/ Scaling & Strength
 - Shadows Settings
   - Gradient Texture w/ Gradient Editor
   - Color
@@ -44,3 +46,7 @@
   - Unlit Intensity
   - Flatten Light Direction
   - Baked Light Color Contribution
+- Utilities
+  - Mesh Hide Mask
+  - Culling Mode
+  - Stencil Properties
