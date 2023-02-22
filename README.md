@@ -3,7 +3,6 @@
  The main purpose is to have consistant lighting in various lighting conditions in games like VRChat as well as to have all of the features and options I desire.
  I have no clue what I'm doing so feel free to tell me what's wrong.
 
-
 ## [DOWNLOAD HERE](https://github.com/CascadianWorks/CasToon/releases)
 
 ![image](https://user-images.githubusercontent.com/90723146/216168431-f0e8022b-e8eb-4ee9-bfaf-fdc31f699123.png)
